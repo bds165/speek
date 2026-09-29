@@ -1,0 +1,5 @@
+line-length = 100
+
+[lint]
+# Defaults (pyflakes + pycodestyle errors) plus import sorting, pyupgrade, and bugbear.
+extend-select = ["I", "UP", "B"]
