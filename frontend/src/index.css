@@ -1,1 +1,23 @@
 @import "tailwindcss";
+
+/*
+ * Colour tokens. Tailwind turns each --color-* into utilities
+ * (bg-page, text-ink, border-subtle, ...), so change colours here, not in components.
+ * The first four come from the chosen palette; ink, ink-muted, accent-strong
+ * and danger are derived so text stays readable (4.5:1+ contrast on page).
+ */
+@theme {
+  --color-page: #f7f2eb;
+  --color-surface: #eae2d6;
+  --color-subtle: #eeeeee;
+  --color-accent: #8b9a6e; /* fill only: too light for text; use ink text on it */
+  --color-accent-strong: #5f6b47; /* links and accent-coloured text */
+  --color-ink: #2b2e24;
+  --color-ink-muted: #5e6152;
+  --color-danger: #a5473d;
+}
+
+body {
+  background-color: var(--color-page);
+  color: var(--color-ink);
+}

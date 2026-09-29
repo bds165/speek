@@ -8,6 +8,8 @@ This is a personal learning project, built iteratively. Work in small steps: one
 
 Use a feature branch per feature and merge into `main`; don't commit directly to `main`.
 
+After implementing a feature: add tests for its behaviour where they add value (skip trivial static markup), run the full test suites plus build/lint, and report results. Then give clear manual test steps — exact URLs, what to click, and what should happen, including error cases.
+
 ## Commands
 
 Windows machine; the backend venv is a Windows venv (`.venv/Scripts/`, no `bin/`).
@@ -21,6 +23,7 @@ Backend — run everything from `backend/` (`pytest.ini` sets `pythonpath = .`, 
 Frontend — run from `frontend/`:
 - `npm run dev` (port 5173), `npm run lint` (oxlint, not ESLint)
 - `npm run build` runs `tsc -b` and is the only type-check; run it to verify TS changes.
+- Tests: `npm test` (Vitest + Testing Library, jsdom); single file: `npx vitest run src/App.test.tsx`. Tests sit next to the code as `*.test.tsx`. jsdom has no `MediaRecorder`/`getUserMedia`/`URL.createObjectURL` — stub them (see `src/recording/Recorder.test.tsx`).
 
 Python 3.14 is just what's installed, not a requirement — dropping to an older version is fine if a dependency lacks 3.14 support.
 
@@ -28,6 +31,8 @@ Python 3.14 is just what's installed, not a requirement — dropping to an older
 
 - Frontend calls relative `/api/...` paths; Vite proxies `/api` to the backend at `127.0.0.1:8000`. Backend routes include the `/api` prefix.
 - New settings/API keys go in `backend/app/config.py` (pydantic-settings) and `backend/.env.example`. Provider credentials stay on the backend only.
+- Styling: use the colour tokens defined in `frontend/src/index.css` (`bg-page`, `text-ink`, `bg-accent`, …), not Tailwind's default palette. Light mode only for now. `accent` is too light for text — use `accent-strong` for text/links and `ink` text on accent fills.
+- Routing: React Router v8 (declarative `BrowserRouter` + `Routes`); route table in `frontend/src/App.tsx`, pages in `frontend/src/pages/`.
 - TS config uses `verbatimModuleSyntax` (use `import type` for type-only imports) and `erasableSyntaxOnly` (no enums, namespaces, or parameter properties).
 
 Planned pipeline: recording → Deepgram transcription (word timestamps, fillers preserved) → Python metrics → LLM coaching → saved results. Principles:

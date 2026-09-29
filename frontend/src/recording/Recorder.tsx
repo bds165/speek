@@ -10,17 +10,17 @@ export function Recorder() {
   const { status, error, recording, elapsed, start, stop, reset } = useRecorder()
 
   return (
-    <section className="mt-8 space-y-4">
+    <section className="mt-8 flex w-full max-w-md flex-col items-center gap-4">
       {status === 'recording' ? (
         <div className="flex items-center gap-4">
           <button
             onClick={stop}
-            className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700"
+            className="rounded-lg bg-danger px-4 py-2 font-medium text-white hover:brightness-110"
           >
             Stop
           </button>
           <span className="flex items-center gap-2 tabular-nums">
-            <span className="size-2.5 animate-pulse rounded-full bg-red-600" />
+            <span className="size-2.5 animate-pulse rounded-full bg-danger" />
             {formatTime(elapsed)}
           </span>
         </div>
@@ -28,23 +28,23 @@ export function Recorder() {
         <button
           onClick={start}
           disabled={status === 'requesting'}
-          className="rounded-lg bg-gray-900 px-4 py-2 font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+          className="rounded-lg bg-accent px-4 py-2 font-medium text-ink hover:brightness-95 disabled:opacity-50"
         >
           {status === 'requesting' ? 'Waiting for microphone…' : 'Start recording'}
         </button>
       ) : null}
 
       {recording && (
-        <div className="space-y-3">
-          <p className="text-sm text-gray-600">Recorded {formatTime(elapsed)}</p>
+        <div className="flex w-full flex-col items-center gap-3">
+          <p className="text-sm text-ink-muted">Recorded {formatTime(elapsed)}</p>
           <audio controls src={recording.url} className="w-full" />
-          <button onClick={reset} className="text-sm font-medium underline">
+          <button onClick={reset} className="text-sm font-medium text-accent-strong underline">
             Record again
           </button>
         </div>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </section>
   )
 }

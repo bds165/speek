@@ -1,24 +1,26 @@
-import { useEffect, useState } from 'react'
+import { Navigate, Route, Routes } from 'react-router'
 
-import { Recorder } from './recording/Recorder.tsx'
+import { Layout } from './layout/Layout.tsx'
+import { AboutPage } from './pages/AboutPage.tsx'
+import { ComingSoonPage } from './pages/ComingSoonPage.tsx'
+import { DashboardPage } from './pages/DashboardPage.tsx'
+import { NotFoundPage } from './pages/NotFoundPage.tsx'
+import { RecordPage } from './pages/RecordPage.tsx'
 
 function App() {
-  const [backend, setBackend] = useState<string>('checking...')
-
-  useEffect(() => {
-    fetch('/api/health')
-      .then((r) => r.json())
-      .then((d) => setBackend(d.status))
-      .catch(() => setBackend('unreachable'))
-  }, [])
-
   return (
-    <main className="mx-auto max-w-xl p-8">
-      <h1 className="text-3xl font-bold">Speek</h1>
-      <p className="mt-2 text-gray-600">Impromptu speaking practice.</p>
-      <p className="mt-6 text-sm">Backend: {backend}</p>
-      <Recorder />
-    </main>
+    <Routes>
+      {/* Layout has no path: it wraps every page with the nav and renders the page in its <Outlet />. */}
+      <Route element={<Layout />}>
+        <Route index element={<Navigate to="/record" replace />} />
+        <Route path="record" element={<RecordPage />} />
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="about" element={<AboutPage />} />
+        <Route path="account" element={<ComingSoonPage title="Account" />} />
+        <Route path="login" element={<ComingSoonPage title="Log in" />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+    </Routes>
   )
 }
 
