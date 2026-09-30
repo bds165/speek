@@ -8,7 +8,7 @@ function formatTime(seconds: number) {
 }
 
 export function Recorder() {
-  const { status, error, recording, elapsed, stoppedAtLimit, start, stop, reset } = useRecorder()
+  const { status, error, recording, elapsed, stoppedAtCap, start, stop, reset } = useRecorder()
   const pastTarget = elapsed >= TARGET_SECONDS
 
   return (
@@ -51,7 +51,7 @@ export function Recorder() {
       {recording && (
         <div className="flex w-full flex-col items-center gap-3">
           <p className="text-sm text-ink-muted">Recorded {formatTime(elapsed)}</p>
-          {stoppedAtLimit && (
+          {stoppedAtCap && (
             <p className="text-sm text-ink">
               Recording stopped automatically at the {formatTime(CAP_SECONDS)} limit.
             </p>

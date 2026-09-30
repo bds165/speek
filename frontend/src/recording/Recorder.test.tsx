@@ -138,6 +138,29 @@ describe('Recorder', () => {
     expect(screen.queryByText(/stopped automatically/)).not.toBeInTheDocument()
   })
 
+  it('treats Stop just before 2:30 as a manual stop, even if the browser finishes late', async () => {
+    // Real browsers fire `onstop` asynchronously, so the cap's clock tick
+    // can land between clicking Stop and the recording actually finishing.
+    class SlowStoppingRecorder extends FakeMediaRecorder {
+      stop() {
+        setTimeout(() => super.stop(), 200)
+      }
+    }
+    vi.stubGlobal('MediaRecorder', SlowStoppingRecorder)
+    vi.useFakeTimers()
+    render(<Recorder />)
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start recording' }))
+    })
+    act(() => vi.advanceTimersByTime(149_900))
+    fireEvent.click(screen.getByRole('button', { name: 'Stop' }))
+    act(() => vi.advanceTimersByTime(200))
+
+    expect(screen.getByText(/Recorded/)).toBeInTheDocument()
+    expect(screen.queryByText(/stopped automatically/)).not.toBeInTheDocument()
+  })
+
   it('clears the limit message on "Record again"', async () => {
     vi.useFakeTimers()
     render(<Recorder />)

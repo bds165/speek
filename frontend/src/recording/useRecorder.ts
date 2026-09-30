@@ -19,7 +19,7 @@ export function useRecorder() {
   const [error, setError] = useState<string | null>(null)
   const [recording, setRecording] = useState<Recording | null>(null)
   const [elapsed, setElapsed] = useState(0)
-  const [stoppedAtLimit, setStoppedAtLimit] = useState(false)
+  const [stoppedAtCap, setStoppedAtCap] = useState(false)
 
   // Refs, not state: these are handles we need to reach from callbacks,
   // and changing them shouldn't re-render anything.
@@ -27,15 +27,19 @@ export function useRecorder() {
   const streamRef = useRef<MediaStream | null>(null)
   const timerRef = useRef<number | null>(null)
 
-  // Stopping the tracks is what turns off the browser's "mic in use" indicator.
-  const releaseMic = useCallback(() => {
-    streamRef.current?.getTracks().forEach((track) => track.stop())
-    streamRef.current = null
+  const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
       clearInterval(timerRef.current)
       timerRef.current = null
     }
   }, [])
+
+  // Stopping the tracks is what turns off the browser's "mic in use" indicator.
+  const releaseMic = useCallback(() => {
+    streamRef.current?.getTracks().forEach((track) => track.stop())
+    streamRef.current = null
+    clearTimer()
+  }, [clearTimer])
 
   const start = useCallback(async () => {
     setError(null)
@@ -67,11 +71,8 @@ export function useRecorder() {
         const seconds = Math.floor((Date.now() - startedAt) / 1000)
         setElapsed(Math.min(seconds, CAP_SECONDS))
         if (seconds >= CAP_SECONDS) {
-          // Clear the timer now: in a real browser `onstop` fires later, and
-          // we don't want another tick calling stop() in the meantime.
-          clearInterval(timerRef.current!)
-          timerRef.current = null
-          setStoppedAtLimit(true)
+          clearTimer()
+          setStoppedAtCap(true)
           recorder.stop()
         }
       }, 250)
@@ -85,17 +86,19 @@ export function useRecorder() {
       )
       setStatus('error')
     }
-  }, [releaseMic])
+  }, [releaseMic, clearTimer])
 
-  // The recording is assembled asynchronously in `onstop`.
+  // The recording is assembled asynchronously in `onstop`. Clear the timer
+  // straight away, so a tick landing before `onstop` can't hit the cap.
   const stop = useCallback(() => {
+    clearTimer()
     recorderRef.current?.stop()
-  }, [])
+  }, [clearTimer])
 
   const reset = useCallback(() => {
     setRecording(null)
     setElapsed(0)
-    setStoppedAtLimit(false)
+    setStoppedAtCap(false)
     setStatus('idle')
   }, [])
 
@@ -118,5 +121,5 @@ export function useRecorder() {
     }
   }, [releaseMic])
 
-  return { status, error, recording, elapsed, stoppedAtLimit, start, stop, reset }
+  return { status, error, recording, elapsed, stoppedAtCap, start, stop, reset }
 }
