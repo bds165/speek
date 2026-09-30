@@ -40,3 +40,17 @@ Planned pipeline: recording → Deepgram transcription (word timestamps, fillers
 - Keep the LLM provider (Gemini initially) and transcription provider replaceable behind a thin interface.
 - "Confidence" feedback is about wording (hedging), never a measurement of emotion or vocal confidence.
 - Out of MVP scope: live coaching, video, pitch/tone/pronunciation analysis, payments.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues for `bds165/speek`, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Uses the five default triage labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root, created only when needed. See `docs/agents/domain.md`.
