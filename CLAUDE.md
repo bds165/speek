@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Working style
 
-This is a personal learning project, built iteratively. Work in small steps: one feature or piece at a time, explain the reasoning behind non-obvious choices, and check in before moving on to the next feature. Don't scaffold ahead (no empty folders, stub modules, or unused dependencies for future features).
+This is a personal learning project, built iteratively. Work in small steps: one feature or piece at a time, explain the reasoning behind non-obvious choices, (keep in mind that I am a computer science student and not a fully fledged SWE), and check in before moving on to the next feature. Don't scaffold ahead (no empty folders, stub modules, or unused dependencies for future features).
 
 Use a feature branch per feature and merge into `main`; don't commit directly to `main`.
 
@@ -23,7 +23,7 @@ Backend — run everything from `backend/` (`pytest.ini` sets `pythonpath = .`, 
 Frontend — run from `frontend/`:
 - `npm run dev` (port 5173), `npm run lint` (oxlint, not ESLint)
 - `npm run build` runs `tsc -b` and is the only type-check; run it to verify TS changes.
-- Tests: `npm test` (Vitest + Testing Library, jsdom); single file: `npx vitest run src/App.test.tsx`. Tests sit next to the code as `*.test.tsx`. jsdom has no `MediaRecorder`/`getUserMedia`/`URL.createObjectURL` — stub them (see `src/recording/Recorder.test.tsx`).
+- Tests: `npm test` (Vitest + Testing Library, jsdom); single file: `npx vitest run src/App.test.tsx`. Tests sit next to the code as `*.test.tsx`. jsdom has no `MediaRecorder`/`getUserMedia`/`URL.createObjectURL` — use the shared fakes in `src/test/fakeMedia.ts` (`stubMedia()`).
 
 Python 3.14 is just what's installed, not a requirement — dropping to an older version is fine if a dependency lacks 3.14 support.
 
