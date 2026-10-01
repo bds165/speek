@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "request_id": "placeholder-replace-by-running-scripts-record_deepgram_fixture",
+    "duration": 4.2,
+    "channels": 1,
+    "models": ["nova-3"]
+  },
+  "results": {
+    "channels": [
+      {
+        "alternatives": [
+          {
+            "transcript": "So, um, I think the main reason uh is time.",
+            "confidence": 0.98,
+            "words": [
+              {"word": "so", "start": 0.32, "end": 0.56, "confidence": 0.99, "punctuated_word": "So,"},
+              {"word": "um", "start": 0.8, "end": 1.12, "confidence": 0.95, "punctuated_word": "um,"},
+              {"word": "i", "start": 1.44, "end": 1.52, "confidence": 0.99, "punctuated_word": "I"},
+              {"word": "think", "start": 1.52, "end": 1.76, "confidence": 0.99, "punctuated_word": "think"},
+              {"word": "the", "start": 1.76, "end": 1.92, "confidence": 0.99, "punctuated_word": "the"},
+              {"word": "main", "start": 1.92, "end": 2.16, "confidence": 0.99, "punctuated_word": "main"},
+              {"word": "reason", "start": 2.16, "end": 2.56, "confidence": 0.99, "punctuated_word": "reason"},
+              {"word": "uh", "start": 2.88, "end": 3.2, "confidence": 0.9, "punctuated_word": "uh"},
+              {"word": "is", "start": 3.44, "end": 3.6, "confidence": 0.99, "punctuated_word": "is"},
+              {"word": "time", "start": 3.6, "end": 4.0, "confidence": 0.99, "punctuated_word": "time."}
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
