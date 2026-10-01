@@ -29,16 +29,19 @@ def replay_fixture(requests):
 
 
 def test_maps_deepgram_words_to_transcript_words():
+    # The fixture is a real response to: "I, uh, graduate in 2027. Uh, I currently, um, ..."
     words = transcriber_returning(replay_fixture([])).transcribe(b"audio", "audio/webm")
 
     assert words[:3] == [
-        Word(text="So,", start=0.32, end=0.56, is_filler=False),
-        Word(text="um,", start=0.8, end=1.12, is_filler=True),
-        Word(text="I", start=1.44, end=1.52, is_filler=False),
+        Word(text="I,", start=1.92, end=2.42, is_filler=False),
+        Word(text="uh,", start=3.84, end=4.16, is_filler=True),
+        Word(text="graduate", start=4.16, end=4.66, is_filler=False),
     ]
-    assert [w.text for w in words if w.is_filler] == ["um,", "uh"]
-    assert words[-1].text == "time."
-    assert " ".join(w.text for w in words) == "So, um, I think the main reason uh is time."
+    assert [w.text for w in words if w.is_filler] == ["uh,", "Uh,", "um,", "Um,", "um,", "Uh,"]
+    assert " ".join(w.text for w in words).startswith(
+        "I, uh, graduate in 2027. Uh, I currently, um, major in computer science,"
+    )
+    assert all(w.start <= w.end for w in words)
 
 
 def test_sends_audio_with_filler_words_on():
@@ -49,9 +52,9 @@ def test_sends_audio_with_filler_words_on():
     assert request.url.host == "api.deepgram.com"
     assert request.url.path == "/v1/listen"
     assert request.url.params["filler_words"] == "true"
-    assert request.url.params["model"] == "nova-3"
+    assert request.url.params["model"] == "nova-2"
     assert request.url.params["language"] == "en"
-    assert request.url.params["punctuate"] == "true"
+    assert request.url.params["smart_format"] == "true"
     assert request.headers["Authorization"] == "Token test-key"
     assert request.headers["Content-Type"] == "audio/mp4"
     assert request.content == b"audio-bytes"

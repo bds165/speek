@@ -11,9 +11,12 @@ from app.transcription import TranscriptionError, Word
 URL = "https://api.deepgram.com/v1/listen"
 
 PARAMS = {
-    "model": "nova-3",
+    # Nova-2, not the newer Nova-3: on a real Attempt Nova-3 kept only 3 of 6 fillers,
+    # merging drawn-out "uhh"s into the neighbouring word. Nova-2 kept all 6.
+    "model": "nova-2",
     "language": "en",
-    "punctuate": "true",
+    # Punctuation plus readable numbers ("2027", not "twenty twenty seven").
+    "smart_format": "true",
     # Off by default, which would strip the "um"s and "uh"s we want to show.
     "filler_words": "true",
 }

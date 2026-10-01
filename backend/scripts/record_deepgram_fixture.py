@@ -7,9 +7,13 @@ tests/test_deepgram.py to match what you said afterwards.
 """
 
 import json
+import sys
 from pathlib import Path
 
 import httpx
+
+# Run as a plain script, so make `app` importable from backend/.
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.config import settings
 from app.deepgram import PARAMS, URL
