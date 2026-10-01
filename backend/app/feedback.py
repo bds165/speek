@@ -45,7 +45,9 @@ async def create_feedback(
     # Read one byte past the limit, so we can tell "too big" without reading all of it.
     data = await audio.read(MAX_UPLOAD_BYTES + 1)
     if len(data) > MAX_UPLOAD_BYTES:
-        raise HTTPException(413, "The recording is too large (over 10 MB).")
+        raise HTTPException(
+            413, f"The recording is too large (over {MAX_UPLOAD_BYTES // (1024 * 1024)} MB)."
+        )
     if not data:
         raise HTTPException(400, "The recording is empty. Try recording again.")
 

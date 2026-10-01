@@ -11,6 +11,7 @@ export function useFeedback() {
 
   const request = useCallback(async (audio: Blob) => {
     setStatus('analysing')
+    setFeedback(null)
     setError(null)
     try {
       setFeedback(await requestFeedback(audio))
