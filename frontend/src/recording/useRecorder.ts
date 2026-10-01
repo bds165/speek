@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { CAP_SECONDS } from './limits.ts'
+
 export type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'stopped' | 'error'
 
 export type Recording = { blob: Blob; url: string }
@@ -17,6 +19,7 @@ export function useRecorder() {
   const [error, setError] = useState<string | null>(null)
   const [recording, setRecording] = useState<Recording | null>(null)
   const [elapsed, setElapsed] = useState(0)
+  const [stoppedAtCap, setStoppedAtCap] = useState(false)
 
   // Refs, not state: these are handles we need to reach from callbacks,
   // and changing them shouldn't re-render anything.
@@ -24,15 +27,19 @@ export function useRecorder() {
   const streamRef = useRef<MediaStream | null>(null)
   const timerRef = useRef<number | null>(null)
 
-  // Stopping the tracks is what turns off the browser's "mic in use" indicator.
-  const releaseMic = useCallback(() => {
-    streamRef.current?.getTracks().forEach((track) => track.stop())
-    streamRef.current = null
+  const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
       clearInterval(timerRef.current)
       timerRef.current = null
     }
   }, [])
+
+  // Stopping the tracks is what turns off the browser's "mic in use" indicator.
+  const releaseMic = useCallback(() => {
+    streamRef.current?.getTracks().forEach((track) => track.stop())
+    streamRef.current = null
+    clearTimer()
+  }, [clearTimer])
 
   const start = useCallback(async () => {
     setError(null)
@@ -57,10 +64,17 @@ export function useRecorder() {
 
       // Derive elapsed time from a start timestamp rather than counting ticks,
       // so a delayed interval (e.g. background tab) doesn't make the clock drift.
+      // The same tick enforces the cap, so the stop always lines up with the clock.
       const startedAt = Date.now()
       setElapsed(0)
       timerRef.current = window.setInterval(() => {
-        setElapsed(Math.floor((Date.now() - startedAt) / 1000))
+        const seconds = Math.floor((Date.now() - startedAt) / 1000)
+        setElapsed(Math.min(seconds, CAP_SECONDS))
+        if (seconds >= CAP_SECONDS) {
+          clearTimer()
+          setStoppedAtCap(true)
+          recorder.stop()
+        }
       }, 250)
       setStatus('recording')
     } catch (e) {
@@ -72,16 +86,19 @@ export function useRecorder() {
       )
       setStatus('error')
     }
-  }, [releaseMic])
+  }, [releaseMic, clearTimer])
 
-  // The recording is assembled asynchronously in `onstop`.
+  // The recording is assembled asynchronously in `onstop`. Clear the timer
+  // straight away, so a tick landing before `onstop` can't hit the cap.
   const stop = useCallback(() => {
+    clearTimer()
     recorderRef.current?.stop()
-  }, [])
+  }, [clearTimer])
 
   const reset = useCallback(() => {
     setRecording(null)
     setElapsed(0)
+    setStoppedAtCap(false)
     setStatus('idle')
   }, [])
 
@@ -104,5 +121,5 @@ export function useRecorder() {
     }
   }, [releaseMic])
 
-  return { status, error, recording, elapsed, start, stop, reset }
+  return { status, error, recording, elapsed, stoppedAtCap, start, stop, reset }
 }
