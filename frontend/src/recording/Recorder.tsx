@@ -1,3 +1,5 @@
+import { Transcript } from '../feedback/Transcript.tsx'
+import { useFeedback } from '../feedback/useFeedback.ts'
 import { CAP_SECONDS, TARGET_SECONDS } from './limits.ts'
 import { useRecorder } from './useRecorder.ts'
 
@@ -9,7 +11,15 @@ function formatTime(seconds: number) {
 
 export function Recorder() {
   const { status, error, recording, elapsed, stoppedAtCap, start, stop, reset } = useRecorder()
+  const feedback = useFeedback()
   const pastTarget = elapsed >= TARGET_SECONDS
+  const analysing = feedback.status === 'analysing'
+
+  // A new Attempt never shows the previous Attempt's Feedback.
+  const recordAgain = () => {
+    feedback.clear()
+    reset()
+  }
 
   return (
     <section className="mt-8 flex w-full max-w-md flex-col items-center gap-4">
@@ -57,13 +67,39 @@ export function Recorder() {
             </p>
           )}
           <audio controls src={recording.url} className="w-full" />
-          <button onClick={reset} className="text-sm font-medium text-accent-strong underline">
-            Record again
-          </button>
+          <div className="flex items-center gap-4">
+            {/* Disabled while analysing, so a late response can't land on a discarded Attempt. */}
+            <button
+              onClick={() => feedback.request(recording.blob)}
+              disabled={analysing}
+              className="rounded-lg bg-accent px-4 py-2 font-medium text-ink hover:brightness-95 disabled:opacity-50"
+            >
+              {analysing ? 'Analysing…' : 'Get feedback'}
+            </button>
+            <button
+              onClick={recordAgain}
+              disabled={analysing}
+              className="text-sm font-medium text-accent-strong underline disabled:opacity-50"
+            >
+              Record again
+            </button>
+          </div>
         </div>
       )}
 
       {error && <p className="text-sm text-danger">{error}</p>}
+      {feedback.error && <p className="text-sm text-danger">{feedback.error}</p>}
+
+      {feedback.feedback && (
+        <div className="mt-4 flex w-full flex-col gap-3">
+          {!feedback.feedback.enough_speech && (
+            <p className="text-ink">
+              We didn't catch enough speech to give feedback. Try recording again.
+            </p>
+          )}
+          <Transcript words={feedback.feedback.transcript} />
+        </div>
+      )}
     </section>
   )
 }

@@ -1,0 +1,276 @@
+{
+  "metadata": {
+    "transaction_key": "deprecated",
+    "request_id": "01a0f575-219e-7c82-bdbb-ba5e708af3a6",
+    "sha256": "d765feef5e2aee1dc930279c089fc0131606572d8b627a4bc8047ebdcf28d633",
+    "created": "2026-10-01T03:14:50.390Z",
+    "duration": 28.2,
+    "channels": 1,
+    "models": [
+      "1abfe86b-e047-4eed-858a-35e5625b41ee"
+    ],
+    "model_info": {
+      "1abfe86b-e047-4eed-858a-35e5625b41ee": {
+        "name": "2-general-nova",
+        "version": "2024-01-06.5664",
+        "arch": "nova-2"
+      }
+    }
+  },
+  "results": {
+    "channels": [
+      {
+        "alternatives": [
+          {
+            "transcript": "I, uh, graduate in 2027. Uh, I currently, um, major in computer science, finance, and economics. Um, I like to play football, and, um, I like to cook. Uh, also",
+            "confidence": 0.99902344,
+            "words": [
+              {
+                "word": "i",
+                "start": 1.92,
+                "end": 2.42,
+                "confidence": 0.888916,
+                "punctuated_word": "I,"
+              },
+              {
+                "word": "uh",
+                "start": 3.84,
+                "end": 4.16,
+                "confidence": 1.0,
+                "punctuated_word": "uh,"
+              },
+              {
+                "word": "graduate",
+                "start": 4.16,
+                "end": 4.66,
+                "confidence": 0.9980469,
+                "punctuated_word": "graduate"
+              },
+              {
+                "word": "in",
+                "start": 6.0,
+                "end": 6.24,
+                "confidence": 1.0,
+                "punctuated_word": "in"
+              },
+              {
+                "word": "2027",
+                "start": 6.24,
+                "end": 7.46,
+                "confidence": 0.9998372,
+                "punctuated_word": "2027."
+              },
+              {
+                "word": "uh",
+                "start": 8.559999,
+                "end": 9.059999,
+                "confidence": 0.99316406,
+                "punctuated_word": "Uh,"
+              },
+              {
+                "word": "i",
+                "start": 9.28,
+                "end": 9.78,
+                "confidence": 1.0,
+                "punctuated_word": "I"
+              },
+              {
+                "word": "currently",
+                "start": 10.16,
+                "end": 10.66,
+                "confidence": 0.9782715,
+                "punctuated_word": "currently,"
+              },
+              {
+                "word": "um",
+                "start": 11.2,
+                "end": 11.7,
+                "confidence": 1.0,
+                "punctuated_word": "um,"
+              },
+              {
+                "word": "major",
+                "start": 11.92,
+                "end": 12.32,
+                "confidence": 0.99609375,
+                "punctuated_word": "major"
+              },
+              {
+                "word": "in",
+                "start": 12.32,
+                "end": 12.82,
+                "confidence": 1.0,
+                "punctuated_word": "in"
+              },
+              {
+                "word": "computer",
+                "start": 12.88,
+                "end": 13.36,
+                "confidence": 0.9980469,
+                "punctuated_word": "computer"
+              },
+              {
+                "word": "science",
+                "start": 13.36,
+                "end": 13.86,
+                "confidence": 0.9975586,
+                "punctuated_word": "science,"
+              },
+              {
+                "word": "finance",
+                "start": 15.235,
+                "end": 15.714999,
+                "confidence": 0.93896484,
+                "punctuated_word": "finance,"
+              },
+              {
+                "word": "and",
+                "start": 15.714999,
+                "end": 16.115,
+                "confidence": 1.0,
+                "punctuated_word": "and"
+              },
+              {
+                "word": "economics",
+                "start": 16.115,
+                "end": 16.615,
+                "confidence": 0.9848633,
+                "punctuated_word": "economics."
+              },
+              {
+                "word": "um",
+                "start": 18.675,
+                "end": 19.154999,
+                "confidence": 0.95703125,
+                "punctuated_word": "Um,"
+              },
+              {
+                "word": "i",
+                "start": 19.154999,
+                "end": 19.314999,
+                "confidence": 0.99902344,
+                "punctuated_word": "I"
+              },
+              {
+                "word": "like",
+                "start": 19.314999,
+                "end": 19.555,
+                "confidence": 0.99609375,
+                "punctuated_word": "like"
+              },
+              {
+                "word": "to",
+                "start": 19.555,
+                "end": 19.634998,
+                "confidence": 1.0,
+                "punctuated_word": "to"
+              },
+              {
+                "word": "play",
+                "start": 19.634998,
+                "end": 20.035,
+                "confidence": 1.0,
+                "punctuated_word": "play"
+              },
+              {
+                "word": "football",
+                "start": 20.035,
+                "end": 20.535,
+                "confidence": 0.9025879,
+                "punctuated_word": "football,"
+              },
+              {
+                "word": "and",
+                "start": 20.914999,
+                "end": 21.414999,
+                "confidence": 0.8039551,
+                "punctuated_word": "and,"
+              },
+              {
+                "word": "um",
+                "start": 21.474998,
+                "end": 21.974998,
+                "confidence": 0.99902344,
+                "punctuated_word": "um,"
+              },
+              {
+                "word": "i",
+                "start": 23.154999,
+                "end": 23.314999,
+                "confidence": 1.0,
+                "punctuated_word": "I"
+              },
+              {
+                "word": "like",
+                "start": 23.314999,
+                "end": 23.555,
+                "confidence": 0.99902344,
+                "punctuated_word": "like"
+              },
+              {
+                "word": "to",
+                "start": 23.555,
+                "end": 23.715,
+                "confidence": 1.0,
+                "punctuated_word": "to"
+              },
+              {
+                "word": "cook",
+                "start": 23.715,
+                "end": 24.215,
+                "confidence": 0.7590332,
+                "punctuated_word": "cook."
+              },
+              {
+                "word": "uh",
+                "start": 25.235,
+                "end": 25.715,
+                "confidence": 0.9638672,
+                "punctuated_word": "Uh,"
+              },
+              {
+                "word": "also",
+                "start": 25.715,
+                "end": 26.215,
+                "confidence": 0.96435547,
+                "punctuated_word": "also"
+              }
+            ],
+            "paragraphs": {
+              "transcript": "\nI, uh, graduate in 2027. Uh, I currently, um, major in computer science, finance, and economics. Um, I like to play football, and, um, I like to cook. Uh, also",
+              "paragraphs": [
+                {
+                  "sentences": [
+                    {
+                      "text": "I, uh, graduate in 2027.",
+                      "start": 1.92,
+                      "end": 7.46
+                    },
+                    {
+                      "text": "Uh, I currently, um, major in computer science, finance, and economics.",
+                      "start": 8.559999,
+                      "end": 16.615
+                    },
+                    {
+                      "text": "Um, I like to play football, and, um, I like to cook.",
+                      "start": 18.675,
+                      "end": 24.215
+                    },
+                    {
+                      "text": "Uh, also",
+                      "start": 25.235,
+                      "end": 26.215
+                    }
+                  ],
+                  "num_words": 30,
+                  "start": 1.92,
+                  "end": 26.215
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
