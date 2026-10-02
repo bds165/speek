@@ -1,23 +1,74 @@
 @import "tailwindcss";
 
 /*
- * Colour tokens. Tailwind turns each --color-* into utilities
- * (bg-page, text-ink, border-subtle, ...), so change colours here, not in components.
- * The first four come from the chosen palette; ink, ink-muted, accent-strong
- * and danger are derived so text stays readable (4.5:1+ contrast on page).
+ * Cue cards: index cards (white stock, red top rule, faint blue ruling) on a cool desk.
+ * Tailwind turns each token into utilities (bg-desk, text-ink, font-spoken, max-w-column, ...),
+ * so change the design here, not in components.
  */
 @theme {
-  --color-page: #f7f2eb;
-  --color-surface: #eae2d6;
-  --color-subtle: #eeeeee;
-  --color-accent: #8b9a6e; /* fill only: too light for text; use ink text on it */
-  --color-accent-strong: #5f6b47; /* links and accent-coloured text */
-  --color-ink: #2b2e24;
-  --color-ink-muted: #5e6152;
-  --color-danger: #a5473d;
+  /* Drop Tailwind's default palette so only these colours exist. */
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-desk: #e6eaee; /* page background */
+  --color-card: #fcfcf9; /* cards; also the text colour on cue-red and ink fills */
+  --color-ink: #1b2536;
+  --color-ink-muted: #556072;
+  --color-cue-red: #b8382f; /* card rule, recording, primary buttons, errors. Never means "bad". */
+  --color-rule-blue: #bfd0e4; /* decoration only, never text */
+  --color-mark-blue: #2f5f9e; /* links, Pause marks, focus ring */
+  --color-highlighter: #f5dc6e; /* Filler highlight, with ink text */
+  --color-line: #cdd4dc; /* hairlines, tracks, borders */
+
+  /* Spoken words (Topic, transcript, quotes) are serif; the app talking is sans. */
+  --font-spoken: "Literata", Georgia, "Times New Roman", serif;
+  --font-ui: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+
+  --text-ui: 0.9375rem; /* 15px */
+  --text-ui--line-height: 1.5;
+  --text-spoken: 1.1875rem; /* 19px transcript */
+  --text-spoken--line-height: 2rem;
+  --text-section: 1.5rem; /* 24px */
+  --text-section--line-height: 1.25;
+  --text-topic: 2.375rem; /* 38px; use a smaller size on phones */
+  --text-topic--line-height: 1.15;
+
+  --container-column: 42.5rem; /* 680px */
+
+  --shadow-desk: 0 1px 0 rgb(27 37 54 / 0.06), 0 8px 24px -12px rgb(27 37 54 / 0.28);
 }
 
-body {
-  background-color: var(--color-page);
-  color: var(--color-ink);
+/* An index card: used by role (Topic, transcript, next step), not around every block. */
+@utility card {
+  background-color: var(--color-card);
+  border-top: 5px solid var(--color-cue-red);
+  border-radius: 3px;
+  box-shadow: var(--shadow-desk);
+}
+
+/* Faint ruled lines, only on the Topic and transcript cards. Spoken text at 2rem line height sits on them. */
+@utility card-ruled {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(2rem - 1px),
+    var(--color-rule-blue) calc(2rem - 1px),
+    var(--color-rule-blue) 2rem
+  );
+  background-position: 0 3.25rem;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-desk);
+    color: var(--color-ink);
+    font-family: var(--font-ui);
+    font-size: var(--text-ui);
+    line-height: var(--text-ui--line-height);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-mark-blue);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
 }

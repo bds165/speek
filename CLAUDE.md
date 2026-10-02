@@ -31,7 +31,11 @@ Python 3.14 is just what's installed, not a requirement — dropping to an older
 
 - Frontend calls relative `/api/...` paths; Vite proxies `/api` to the backend at `127.0.0.1:8000`. Backend routes include the `/api` prefix.
 - New settings/API keys go in `backend/app/config.py` (pydantic-settings) and `backend/.env.example`. Provider credentials stay on the backend only.
-- Styling: use the colour tokens defined in `frontend/src/index.css` (`bg-page`, `text-ink`, `bg-accent`, …), not Tailwind's default palette. Light mode only for now. `accent` is too light for text — use `accent-strong` for text/links and `ink` text on accent fills.
+- Styling ("cue cards"): use the tokens in `frontend/src/index.css`; Tailwind's default palette is switched off. Light mode only for now.
+  - Colours: `desk` page, `card` cards, `ink`/`ink-muted` text, `cue-red` for the card rule, recording and primary buttons (`card` text on it), `mark-blue` for links, Pause marks and focus, `highlighter` behind Fillers (`ink` text), `line` for borders. `rule-blue` is decoration only, never text. Red never means "bad"; Metrics and Coaching never use colour to judge.
+  - Type: `font-spoken` (Literata) for words someone speaks (Topic, transcript, quotes, the next step); the default `font-ui` (Schibsted Grotesk) for the app talking. `tabular-nums` wherever digits change or line up. Sizes: `text-ui`, `text-spoken`, `text-section`, `text-topic`.
+  - Layout: one left-aligned `max-w-column` column. The `card` utility is for roles only (Topic, transcript, next step), not around every block; add `card-ruled` only on the Topic and transcript cards.
+  - No all-caps eyebrow labels, big-number stat tiles or decorative entrance animations. Keyboard focus stays visible (global `:focus-visible` ring; don't remove outlines).
 - Routing: React Router v8 (declarative `BrowserRouter` + `Routes`); route table in `frontend/src/App.tsx`, pages in `frontend/src/pages/`.
 - TS config uses `verbatimModuleSyntax` (use `import type` for type-only imports) and `erasableSyntaxOnly` (no enums, namespaces, or parameter properties).
 

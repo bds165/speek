@@ -1,14 +1,26 @@
+import { Link } from 'react-router'
+
 export function AboutPage() {
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-semibold">About Speek</h1>
-      <p className="mt-4">
-        Speek is for practising impromptu speaking. You get a topic, take a minute or two to
-        prepare, speak for about a minute, and get specific feedback on what you said.
+    <div className="flex max-w-prose flex-col gap-4">
+      <h1 className="text-section font-semibold tracking-tight">About Speek</h1>
+      <p>
+        Speek is for practising impromptu speaking. You get a topic, take a moment to prepare,
+        speak for about a minute, and get specific feedback on what you said.
       </p>
-      <p className="mt-4">
-        Feedback covers filler words, pace and pauses, clarity, structure, and wording, with one
-        or two things to focus on next time.
+      <p>
+        You see your transcript with fillers and pauses marked, a few measurements like your pace,
+        and coaching on clarity, structure and wording that quotes your own words. It ends with one
+        thing to try next time.
+      </p>
+      <p className="text-ink-muted">
+        Speek never scores you, and it doesn't try to judge your tone of voice or how confident you
+        sound.
+      </p>
+      <p>
+        <Link to="/record" className="font-medium text-mark-blue underline underline-offset-3">
+          Record your first attempt
+        </Link>
       </p>
     </div>
   )
