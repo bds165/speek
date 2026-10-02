@@ -27,16 +27,16 @@ export function Recorder() {
         <div className="flex items-center gap-4">
           <button
             onClick={stop}
-            className="rounded-lg bg-danger px-4 py-2 font-medium text-white hover:brightness-110"
+            className="rounded-md bg-ink px-4 py-2 font-semibold text-card hover:brightness-125"
           >
             Stop
           </button>
           <span className="flex items-center gap-2 tabular-nums">
-            <span className="size-2.5 animate-pulse rounded-full bg-danger" />
+            <span className="size-2.5 animate-pulse rounded-full bg-cue-red" />
             {pastTarget ? (
               <>
-                <span className="font-semibold text-accent-strong">{formatTime(elapsed)}</span>
-                <span className="text-sm text-accent-strong">Target reached</span>
+                <span className="font-semibold text-ink">{formatTime(elapsed)}</span>
+                <span className="text-sm font-medium text-ink">Target reached</span>
               </>
             ) : (
               <>
@@ -52,7 +52,7 @@ export function Recorder() {
         <button
           onClick={start}
           disabled={status === 'requesting'}
-          className="rounded-lg bg-accent px-4 py-2 font-medium text-ink hover:brightness-95 disabled:opacity-50"
+          className="rounded-md bg-cue-red px-4 py-2 font-semibold text-card hover:brightness-110 disabled:opacity-50"
         >
           {status === 'requesting' ? 'Waiting for microphone…' : 'Start recording'}
         </button>
@@ -72,14 +72,14 @@ export function Recorder() {
             <button
               onClick={() => feedback.request(recording.blob)}
               disabled={analysing}
-              className="rounded-lg bg-accent px-4 py-2 font-medium text-ink hover:brightness-95 disabled:opacity-50"
+              className="rounded-md bg-cue-red px-4 py-2 font-semibold text-card hover:brightness-110 disabled:opacity-50"
             >
               {analysing ? 'Analysing…' : 'Get feedback'}
             </button>
             <button
               onClick={recordAgain}
               disabled={analysing}
-              className="text-sm font-medium text-accent-strong underline disabled:opacity-50"
+              className="text-sm font-medium text-mark-blue underline disabled:opacity-50"
             >
               Record again
             </button>
@@ -87,8 +87,8 @@ export function Recorder() {
         </div>
       )}
 
-      {error && <p className="text-sm text-danger">{error}</p>}
-      {feedback.error && <p className="text-sm text-danger">{feedback.error}</p>}
+      {error && <p className="text-sm text-cue-red">{error}</p>}
+      {feedback.error && <p className="text-sm text-cue-red">{feedback.error}</p>}
 
       {feedback.feedback && (
         <div className="mt-4 flex w-full flex-col gap-3">
