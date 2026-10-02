@@ -35,8 +35,8 @@ export function Recorder() {
             <span className="size-2.5 animate-pulse rounded-full bg-cue-red" />
             {pastTarget ? (
               <>
-                <span className="font-semibold text-mark-blue">{formatTime(elapsed)}</span>
-                <span className="text-sm text-mark-blue">Target reached</span>
+                <span className="font-semibold text-ink">{formatTime(elapsed)}</span>
+                <span className="text-sm font-medium text-ink">Target reached</span>
               </>
             ) : (
               <>

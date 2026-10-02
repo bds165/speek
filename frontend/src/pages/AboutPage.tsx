@@ -9,9 +9,9 @@ export function AboutPage() {
         speak for about a minute, and get specific feedback on what you said.
       </p>
       <p>
-        You see your transcript with fillers and pauses marked, a few measurements like your pace,
-        and coaching on clarity, structure and wording that quotes your own words. It ends with one
-        thing to try next time.
+        For now you get a transcript of what you said with fillers like "um" and "uh" highlighted.
+        Measurements such as your pace and pauses, and coaching on clarity, structure and wording,
+        are on the way.
       </p>
       <p className="text-ink-muted">
         Speek never scores you, and it doesn't try to judge your tone of voice or how confident you
