@@ -53,14 +53,21 @@ describe('Recorder', () => {
     expect(screen.getByText('1:05')).toBeInTheDocument()
   })
 
-  it('shows the ~1:00 target while recording', async () => {
+  it('shows a timeline of elapsed time against the ~1:00 target and the 2:30 cap', async () => {
     vi.useFakeTimers()
     render(<Recorder />)
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Start recording' }))
     })
-    expect(screen.getByText('/ ~1:00 target')).toBeInTheDocument()
+    const timeline = screen.getByRole('progressbar', { name: 'Recording time' })
+    expect(timeline).toHaveAttribute('aria-valuemax', '150')
+    expect(timeline).toHaveAttribute('aria-valuenow', '0')
+    expect(screen.getByText('~1:00 target')).toBeInTheDocument()
+
+    act(() => vi.advanceTimersByTime(42_000))
+    expect(timeline).toHaveAttribute('aria-valuenow', '42')
+    expect(timeline).toHaveAttribute('aria-valuetext', '0:42 of 2:30')
   })
 
   it('marks the target as reached after 1:00 and keeps recording', async () => {
@@ -75,7 +82,6 @@ describe('Recorder', () => {
 
     act(() => vi.advanceTimersByTime(1_000))
     expect(screen.getByText(/target reached/i)).toBeInTheDocument()
-    expect(screen.queryByText('/ ~1:00 target')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument()
     expect(stopTrack).not.toHaveBeenCalled()
   })

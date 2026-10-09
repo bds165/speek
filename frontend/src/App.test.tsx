@@ -16,7 +16,7 @@ function renderAt(path: string) {
 describe('routing', () => {
   it('redirects / to the record page', () => {
     renderAt('/')
-    expect(screen.getByRole('heading', { name: 'Record' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Topic' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Record' })).toHaveAttribute('aria-current', 'page')
   })
 
