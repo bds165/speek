@@ -1,8 +1,9 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
 import type { Word } from './api.ts'
 
-export function Transcript({ words }: { words: Word[] }) {
+// `children` sits at the foot of the card, under the words (the Metrics line).
+export function Transcript({ words, children }: { words: Word[]; children?: ReactNode }) {
   // Each Filler's position among the Fillers, so the swipes draw in one after another.
   let fillerIndex = 0
 
@@ -27,6 +28,7 @@ export function Transcript({ words }: { words: Word[] }) {
           </span>
         ))}
       </p>
+      {children}
     </section>
   )
 }

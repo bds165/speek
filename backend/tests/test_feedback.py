@@ -96,6 +96,69 @@ def test_silence_is_not_enough_speech(client):
     assert r.json() == {"transcript": [], "enough_speech": False}
 
 
+def speech(*kinds, seconds, offset=0.0):
+    """Words back to back over `seconds`, from `offset`: "w" is a spoken word, "um" a Filler."""
+    step = seconds / len(kinds)
+    return [
+        Word(
+            text=k,
+            start=offset + i * step,
+            end=offset + (i + 1) * step,
+            is_filler=k == "um",
+        )
+        for i, k in enumerate(kinds)
+    ]
+
+
+def test_metrics_wpm_is_words_per_minute_of_speech(client):
+    # 30 words in 15 seconds is 120 a minute.
+    use(FakeTranscriber(speech(*["w"] * 30, seconds=15)))
+
+    metrics = post_audio(client).json()["metrics"]
+
+    assert metrics["wpm"] == 120
+    assert metrics["filler_count"] == 0
+    assert metrics["typical_wpm"] == {"low": 120, "high": 160}
+
+
+def test_metrics_wpm_excludes_fillers_from_the_word_count(client):
+    # 30 words and 10 Fillers in 20 seconds: 30 words / (20/60) minutes = 90.
+    use(FakeTranscriber(speech(*["w", "w", "w", "um"] * 10, seconds=20)))
+
+    metrics = post_audio(client).json()["metrics"]
+
+    assert metrics["wpm"] == 90
+    assert metrics["filler_count"] == 10
+
+
+def test_metrics_leading_and_trailing_fillers_are_part_of_the_speaking_time(client):
+    # 30 words between two Fillers, 20 seconds in all: 90. Timing from the first
+    # and last non-Filler words instead would give 96.
+    use(FakeTranscriber(speech("um", *["w"] * 30, "um", seconds=20)))
+
+    metrics = post_audio(client).json()["metrics"]
+
+    assert metrics["wpm"] == 90
+    assert metrics["filler_count"] == 2
+
+
+def test_metrics_silence_before_the_first_word_doesnt_change_wpm(client):
+    # Speaking starts 5 seconds in. Trailing silence never reaches the words at all,
+    # so timing ends at the last word's end either way.
+    use(FakeTranscriber(speech(*["w"] * 30, seconds=15, offset=5)))
+
+    assert post_audio(client).json()["metrics"]["wpm"] == 120
+
+
+def test_no_metrics_when_there_is_not_enough_speech(client):
+    use(FakeTranscriber(speech(*["w"] * 14, "um", seconds=10)))
+
+    body = post_audio(client).json()
+
+    assert body["enough_speech"] is False
+    assert "metrics" not in body
+
+
 def test_empty_audio_is_rejected(client):
     fake = use(FakeTranscriber(words(15)))
     r = post_audio(client, data=b"")

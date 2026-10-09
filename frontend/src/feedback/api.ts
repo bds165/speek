@@ -1,7 +1,14 @@
 // Mirrors the backend's Feedback response (backend/app/feedback.py).
 export type Word = { text: string; start: number; end: number; is_filler: boolean }
 
-export type Feedback = { transcript: Word[]; enough_speech: boolean }
+export type Metrics = {
+  wpm: number
+  typical_wpm: { low: number; high: number }
+  filler_count: number
+}
+
+// `metrics` is absent when there wasn't enough speech.
+export type Feedback = { transcript: Word[]; enough_speech: boolean; metrics?: Metrics }
 
 const UNREACHABLE = "Couldn't reach the server. Check your connection and try again."
 const UNKNOWN = 'Something went wrong while analysing your recording. Please try again.'
