@@ -1,9 +1,11 @@
 // Mirrors the backend's Feedback response (backend/app/feedback.py).
 export type Word = { text: string; start: number; end: number; is_filler: boolean }
 
+export type WpmBand = { low: number; high: number }
+
 export type Metrics = {
   wpm: number
-  typical_wpm: { low: number; high: number }
+  typical_wpm: WpmBand
   filler_count: number
 }
 

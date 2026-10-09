@@ -36,8 +36,12 @@ class Feedback(BaseModel):
     metrics: Metrics | None = None
 
 
+def count_spoken(words: list[Word]) -> int:
+    return sum(1 for w in words if not w.is_filler)
+
+
 def calculate_metrics(words: list[Word]) -> Metrics:
-    spoken = sum(1 for w in words if not w.is_filler)
+    spoken = count_spoken(words)
     # From the first word's start to the last word's end, so silence before and after doesn't
     # count. Fillers at either end are still speaking time, so they're part of the span.
     minutes = (words[-1].end - words[0].start) / 60
@@ -81,7 +85,6 @@ async def create_feedback(
     except TranscriptionError as e:
         raise HTTPException(502, "We couldn't transcribe your recording. Please try again.") from e
 
-    spoken = sum(1 for w in words if not w.is_filler)
-    if spoken < MIN_SPEECH_WORDS:
+    if count_spoken(words) < MIN_SPEECH_WORDS:
         return Feedback(transcript=words, enough_speech=False)
     return Feedback(transcript=words, enough_speech=True, metrics=calculate_metrics(words))
