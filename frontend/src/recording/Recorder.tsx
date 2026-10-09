@@ -9,6 +9,47 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+const PRIMARY_BUTTON =
+  'rounded-md bg-cue-red px-4.5 py-2.5 font-semibold text-card hover:brightness-110 disabled:opacity-50'
+
+const TARGET_PERCENT = (TARGET_SECONDS / CAP_SECONDS) * 100
+
+// The bar's full width is the 2:30 cap; the red tick marks the ~1:00 target.
+function Timeline({ elapsed }: { elapsed: number }) {
+  return (
+    <div className="relative h-9">
+      <div
+        role="progressbar"
+        aria-label="Recording time"
+        aria-valuemin={0}
+        aria-valuemax={CAP_SECONDS}
+        aria-valuenow={elapsed}
+        aria-valuetext={`${formatTime(elapsed)} of ${formatTime(CAP_SECONDS)}`}
+        className="absolute inset-x-0 top-2 h-1.5 overflow-hidden rounded-full bg-line"
+      >
+        {/* elapsed ticks once a second; the 1s linear transition makes the fill glide between ticks. */}
+        <div
+          className="h-full bg-ink motion-safe:transition-[width] motion-safe:duration-1000 motion-safe:ease-linear"
+          style={{ width: `${(elapsed / CAP_SECONDS) * 100}%` }}
+        />
+      </div>
+      <div
+        className="absolute top-0.5 h-4.5 w-0.5 bg-cue-red"
+        style={{ left: `${TARGET_PERCENT}%` }}
+      />
+      <div className="absolute inset-x-0 top-5 text-xs text-ink-muted tabular-nums">
+        <span
+          className="absolute -translate-x-1/2 whitespace-nowrap"
+          style={{ left: `${TARGET_PERCENT}%` }}
+        >
+          ~{formatTime(TARGET_SECONDS)} target
+        </span>
+        <span className="absolute right-0">{formatTime(CAP_SECONDS)}</span>
+      </div>
+    </div>
+  )
+}
+
 export function Recorder() {
   const { status, error, recording, elapsed, stoppedAtCap, start, stop, reset } = useRecorder()
   const feedback = useFeedback()
@@ -22,84 +63,91 @@ export function Recorder() {
   }
 
   return (
-    <section className="mt-8 flex w-full max-w-md flex-col items-center gap-4">
-      {status === 'recording' ? (
-        <div className="flex items-center gap-4">
-          <button
-            onClick={stop}
-            className="rounded-md bg-ink px-4 py-2 font-semibold text-card hover:brightness-125"
-          >
-            Stop
-          </button>
-          <span className="flex items-center gap-2 tabular-nums">
-            <span className="size-2.5 animate-pulse rounded-full bg-cue-red" />
-            {pastTarget ? (
-              <>
-                <span className="font-semibold text-ink">{formatTime(elapsed)}</span>
-                <span className="text-sm font-medium text-ink">Target reached</span>
-              </>
-            ) : (
-              <>
-                <span>{formatTime(elapsed)}</span>
-                <span className="text-sm text-ink-muted">
-                  / ~{formatTime(TARGET_SECONDS)} target
-                </span>
-              </>
-            )}
-          </span>
-        </div>
-      ) : status !== 'stopped' ? (
-        <button
-          onClick={start}
-          disabled={status === 'requesting'}
-          className="rounded-md bg-cue-red px-4 py-2 font-semibold text-card hover:brightness-110 disabled:opacity-50"
-        >
-          {status === 'requesting' ? 'Waiting for microphone…' : 'Start recording'}
-        </button>
-      ) : null}
-
-      {recording && (
-        <div className="flex w-full flex-col items-center gap-3">
-          <p className="text-sm text-ink-muted">Recorded {formatTime(elapsed)}</p>
-          {stoppedAtCap && (
-            <p className="text-sm text-ink">
-              Recording stopped automatically at the {formatTime(CAP_SECONDS)} limit.
-            </p>
-          )}
-          <audio controls src={recording.url} className="w-full" />
-          <div className="flex items-center gap-4">
-            {/* Disabled while analysing, so a late response can't land on a discarded Attempt. */}
-            <button
-              onClick={() => feedback.request(recording.blob)}
-              disabled={analysing}
-              className="rounded-md bg-cue-red px-4 py-2 font-semibold text-card hover:brightness-110 disabled:opacity-50"
-            >
-              {analysing ? 'Analysing…' : 'Get feedback'}
+    <div className="flex flex-col gap-7">
+      <section className="flex flex-col gap-3.5">
+        {status === 'recording' ? (
+          <>
+            <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+              <span className="flex items-center gap-2 font-semibold text-cue-red">
+                <span className="size-2.5 rounded-full bg-cue-red motion-safe:animate-pulse" />
+                Recording
+              </span>
+              <span className="text-section font-semibold tabular-nums">
+                {formatTime(elapsed)}
+              </span>
+              {/* Reaching the target is said in words, not only shown on the timeline. */}
+              {pastTarget && <span className="font-medium">Target reached</span>}
+            </div>
+            <Timeline elapsed={elapsed} />
+            <div>
+              <button
+                onClick={stop}
+                className="rounded-md bg-ink px-4.5 py-2.5 font-semibold text-card hover:brightness-125"
+              >
+                Stop
+              </button>
+            </div>
+          </>
+        ) : status !== 'stopped' ? (
+          <div className="flex flex-wrap items-center gap-x-4.5 gap-y-3">
+            <button onClick={start} disabled={status === 'requesting'} className={PRIMARY_BUTTON}>
+              {status === 'requesting' ? 'Waiting for microphone…' : 'Start recording'}
             </button>
-            <button
-              onClick={recordAgain}
-              disabled={analysing}
-              className="text-sm font-medium text-mark-blue underline disabled:opacity-50"
-            >
-              Record again
-            </button>
+            <span className="text-ink-muted">Stops on its own at {formatTime(CAP_SECONDS)}.</span>
           </div>
-        </div>
-      )}
+        ) : null}
 
-      {error && <p className="text-sm text-cue-red">{error}</p>}
-      {feedback.error && <p className="text-sm text-cue-red">{feedback.error}</p>}
+        {recording && (
+          <>
+            {stoppedAtCap && (
+              <p>Recording stopped automatically at the {formatTime(CAP_SECONDS)} limit.</p>
+            )}
+            <audio controls src={recording.url} className="w-full" />
+            <div className="flex flex-wrap items-center gap-x-4.5 gap-y-3">
+              {/* Disabled while analysing, so a late response can't land on a discarded Attempt. */}
+              <button
+                onClick={() => feedback.request(recording.blob)}
+                disabled={analysing}
+                className={PRIMARY_BUTTON}
+              >
+                {analysing ? 'Analysing…' : 'Get feedback'}
+              </button>
+              <button
+                onClick={recordAgain}
+                disabled={analysing}
+                className="py-2.5 font-semibold text-mark-blue underline underline-offset-3 disabled:opacity-50"
+              >
+                Record again
+              </button>
+              <span className="text-ink-muted tabular-nums">Recorded {formatTime(elapsed)}</span>
+            </div>
+          </>
+        )}
+
+        {/* role="alert" so screen readers announce an error as soon as it appears. */}
+        {error && (
+          <p role="alert" className="rounded-md border border-cue-red bg-card px-4 py-3">
+            <strong className="font-semibold text-cue-red">{error}</strong>
+          </p>
+        )}
+        {feedback.error && (
+          <p role="alert" className="rounded-md border border-cue-red bg-card px-4 py-3">
+            <strong className="font-semibold text-cue-red">{feedback.error}</strong> Your
+            recording is still here, so you can try Get feedback again.
+          </p>
+        )}
+      </section>
 
       {feedback.feedback && (
-        <div className="mt-4 flex w-full flex-col gap-3">
+        <div className="flex flex-col gap-3.5">
           {!feedback.feedback.enough_speech && (
-            <p className="text-ink">
+            <p className="rounded-md border border-line bg-card px-4 py-3">
               We didn't catch enough speech to give feedback. Try recording again.
             </p>
           )}
           <Transcript words={feedback.feedback.transcript} />
         </div>
       )}
-    </section>
+    </div>
   )
 }

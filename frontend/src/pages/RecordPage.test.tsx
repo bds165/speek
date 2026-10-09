@@ -36,6 +36,20 @@ async function recordAttempt() {
   return user
 }
 
+describe('The Topic card', () => {
+  it('shows what to talk about, before you start recording', () => {
+    render(<RecordPage />)
+
+    const topic = screen.getByRole('region', { name: 'Topic' })
+    expect(
+      within(topic).getByRole('heading', {
+        name: 'Pick something you know well and talk about it for a minute.',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Start recording' })).toBeInTheDocument()
+  })
+})
+
 describe('Getting feedback on the Record page', () => {
   it('uploads the Attempt and shows the transcript with Fillers highlighted', async () => {
     let respond: (r: Response) => void = () => {}
