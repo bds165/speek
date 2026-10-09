@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from app.config import settings
 from app.deepgram import DeepgramTranscriber
-from app.limits import MAX_UPLOAD_BYTES, MIN_SPEECH_WORDS
+from app.limits import MAX_UPLOAD_BYTES, MIN_SPEECH_WORDS, TYPICAL_WPM_HIGH, TYPICAL_WPM_LOW
 from app.transcription import Transcriber, TranscriptionError, Word
 
 router = APIRouter()
@@ -18,9 +18,38 @@ router = APIRouter()
 SUPPORTED_TYPES = {"audio/webm", "audio/mp4"}
 
 
+class WpmBand(BaseModel):
+    low: int
+    high: int
+
+
+class Metrics(BaseModel):
+    wpm: int
+    typical_wpm: WpmBand
+    filler_count: int
+
+
 class Feedback(BaseModel):
     transcript: list[Word]
     enough_speech: bool
+    # Absent (not null) when there isn't enough speech: see `response_model_exclude_none` below.
+    metrics: Metrics | None = None
+
+
+def count_spoken(words: list[Word]) -> int:
+    return sum(1 for w in words if not w.is_filler)
+
+
+def calculate_metrics(words: list[Word]) -> Metrics:
+    spoken = count_spoken(words)
+    # From the first word's start to the last word's end, so silence before and after doesn't
+    # count. Fillers at either end are still speaking time, so they're part of the span.
+    minutes = (words[-1].end - words[0].start) / 60
+    return Metrics(
+        wpm=round(spoken / minutes),
+        typical_wpm=WpmBand(low=TYPICAL_WPM_LOW, high=TYPICAL_WPM_HIGH),
+        filler_count=len(words) - spoken,
+    )
 
 
 def get_transcriber() -> Iterator[Transcriber]:
@@ -32,7 +61,7 @@ def get_transcriber() -> Iterator[Transcriber]:
         yield DeepgramTranscriber(settings.deepgram_api_key, client)
 
 
-@router.post("/api/feedback")
+@router.post("/api/feedback", response_model_exclude_none=True)
 async def create_feedback(
     audio: UploadFile,
     transcriber: Annotated[Transcriber, Depends(get_transcriber)],
@@ -56,5 +85,6 @@ async def create_feedback(
     except TranscriptionError as e:
         raise HTTPException(502, "We couldn't transcribe your recording. Please try again.") from e
 
-    spoken = sum(1 for w in words if not w.is_filler)
-    return Feedback(transcript=words, enough_speech=spoken >= MIN_SPEECH_WORDS)
+    if count_spoken(words) < MIN_SPEECH_WORDS:
+        return Feedback(transcript=words, enough_speech=False)
+    return Feedback(transcript=words, enough_speech=True, metrics=calculate_metrics(words))

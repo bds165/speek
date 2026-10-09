@@ -1,3 +1,4 @@
+import { MetricsLine } from '../feedback/MetricsLine.tsx'
 import { Transcript } from '../feedback/Transcript.tsx'
 import { useFeedback } from '../feedback/useFeedback.ts'
 import { CAP_SECONDS, TARGET_SECONDS } from './limits.ts'
@@ -145,7 +146,9 @@ export function Recorder() {
               We didn't catch enough speech to give feedback. Try recording again.
             </p>
           )}
-          <Transcript words={feedback.feedback.transcript} />
+          <Transcript words={feedback.feedback.transcript}>
+            {feedback.feedback.metrics && <MetricsLine metrics={feedback.feedback.metrics} />}
+          </Transcript>
         </div>
       )}
     </div>

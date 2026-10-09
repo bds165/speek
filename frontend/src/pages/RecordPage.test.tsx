@@ -76,6 +76,37 @@ describe('Getting feedback on the Record page', () => {
     expect(screen.getByRole('button', { name: 'Record again' })).toBeEnabled()
   })
 
+  it('shows the Metrics below the transcript, with the typical WPM band', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(200, {
+        transcript: TRANSCRIPT,
+        enough_speech: true,
+        metrics: { wpm: 138, typical_wpm: { low: 120, high: 160 }, filler_count: 6 },
+      }),
+    )
+    const user = await recordAttempt()
+
+    await user.click(screen.getByRole('button', { name: 'Get feedback' }))
+
+    const metrics = await screen.findByRole('region', { name: 'Metrics' })
+    expect(metrics).toHaveTextContent('138 words a minute (typical ~120–160) · 6 fillers')
+  })
+
+  it('says "1 filler" for a single Filler', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(200, {
+        transcript: TRANSCRIPT,
+        enough_speech: true,
+        metrics: { wpm: 120, typical_wpm: { low: 120, high: 160 }, filler_count: 1 },
+      }),
+    )
+    const user = await recordAttempt()
+
+    await user.click(screen.getByRole('button', { name: 'Get feedback' }))
+
+    expect(await screen.findByRole('region', { name: 'Metrics' })).toHaveTextContent(/· 1 filler$/)
+  })
+
   it('says when there was not enough speech, and shows the words caught', async () => {
     fetchMock.mockResolvedValue(
       jsonResponse(200, { transcript: [word('Hello'), word('um', true)], enough_speech: false }),
@@ -90,6 +121,7 @@ describe('Getting feedback on the Record page', () => {
       ),
     ).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Transcript' })).toHaveTextContent('Hello um')
+    expect(screen.queryByRole('region', { name: 'Metrics' })).not.toBeInTheDocument()
   })
 
   it('shows the error message and lets you retry on the same Attempt', async () => {
