@@ -17,7 +17,7 @@ export function Transcript({ words }: { words: Word[] }) {
             {word.is_filler ? (
               <mark
                 className="highlighter-swipe"
-                style={{ '--i': fillerIndex++ } as CSSProperties}
+                style={{ '--filler-index': fillerIndex++ } as CSSProperties}
               >
                 {word.text}
               </mark>

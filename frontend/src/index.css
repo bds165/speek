@@ -59,7 +59,7 @@
 
 /*
  * A Filler marked with a highlighter: a slightly slanted yellow swipe behind ink text.
- * The swipe draws in left to right when the mark appears, each one --i x 140ms after the first,
+ * The swipe draws in left to right when the mark appears, each one --filler-index x 140ms after the first,
  * like someone marking the card. It plays once because a new Feedback mounts new marks.
  * Without motion (prefers-reduced-motion) the swipe is simply there.
  */
@@ -78,7 +78,7 @@
 
   @media (prefers-reduced-motion: no-preference) {
     animation: highlighter-swipe 420ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
-    animation-delay: calc(var(--i, 0) * 140ms + 200ms);
+    animation-delay: calc(var(--filler-index, 0) * 140ms + 200ms);
   }
 }
 

@@ -16,7 +16,6 @@ export function RecordPage() {
           Take a moment to think, then start when you're ready. Aim for about a minute.
         </p>
       </section>
-      {/* A Shuffle button for the Topic will sit here later. */}
       <Recorder />
     </div>
   )
