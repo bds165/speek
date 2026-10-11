@@ -11,7 +11,7 @@ function PauseMark({ duration }: { duration: number }) {
     <span
       role="img"
       aria-label={`pause, ${seconds} seconds`}
-      className="font-ui text-[13px] font-semibold whitespace-nowrap text-mark-blue tabular-nums"
+      className="font-ui text-sm font-semibold whitespace-nowrap text-mark-blue tabular-nums"
     >
       //{seconds}s
     </span>

@@ -62,8 +62,8 @@ def find_pauses(words: list[Word]) -> list[Pause]:
     spoken = [(i, w) for i, w in enumerate(words) if not w.is_filler]
     pauses = []
     for (i, before), (_, after) in pairwise(spoken):
-        # Rounded to hundredths: timestamps are only that precise, and it hides float noise
-        # like 1.9000000000000004.
+        # Rounded to hundredths before comparing: timestamps are only that precise, and
+        # unrounded, a gap of exactly 1.5s can come out as 1.4999999999999996 and be missed.
         gap = round(after.start - before.end, 2)
         if gap >= PAUSE_SECONDS:
             pauses.append(Pause(after=i, duration=gap))

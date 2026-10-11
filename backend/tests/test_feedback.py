@@ -179,6 +179,33 @@ def metrics_for(client, *items):
     return post_audio(client).json()["metrics"]
 
 
+def test_no_pauses_in_steady_speech(client):
+    metrics = metrics_for(client, "w", "um", "w", 0.5, "w")
+
+    assert metrics["pause_count"] == 0
+    assert metrics["pauses"] == []
+    assert "longest_pause" not in metrics
+
+
+def test_a_gap_of_exactly_the_threshold_is_a_pause(client):
+    # 2.51 - 1.01 is 1.4999999999999998 in floating point, which must still count.
+    first, *rest = timeline()
+    shift = 2.51 - rest[0].start
+    use(
+        FakeTranscriber(
+            [
+                first.model_copy(update={"end": 1.01}),
+                *[
+                    w.model_copy(update={"start": w.start + shift, "end": w.end + shift})
+                    for w in rest
+                ],
+            ]
+        )
+    )
+
+    assert post_audio(client).json()["metrics"]["pauses"] == [{"after": 0, "duration": 1.5}]
+
+
 def test_a_gap_just_under_the_threshold_is_not_a_pause(client):
     metrics = metrics_for(client, "w", "w", 1.49, "w")
 
