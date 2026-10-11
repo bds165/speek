@@ -146,7 +146,10 @@ export function Recorder() {
               We didn't catch enough speech to give feedback. Try recording again.
             </p>
           )}
-          <Transcript words={feedback.feedback.transcript}>
+          <Transcript
+            words={feedback.feedback.transcript}
+            pauses={feedback.feedback.metrics?.pauses}
+          >
             {feedback.feedback.metrics && <MetricsLine metrics={feedback.feedback.metrics} />}
           </Transcript>
         </div>

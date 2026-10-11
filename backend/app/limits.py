@@ -9,5 +9,9 @@ MIN_SPEECH_WORDS = 15
 TYPICAL_WPM_LOW = 120
 TYPICAL_WPM_HIGH = 160
 
+# A silence between two non-Filler words at least this long (in seconds) is a Pause.
+# Fillers inside the silence don't split it.
+PAUSE_SECONDS = 1.5
+
 # Largest audio upload accepted. A 2:30 Opus recording is well under 1 MB.
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024

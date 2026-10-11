@@ -13,6 +13,8 @@ function word(text: string, is_filler = false): Word {
 
 const TRANSCRIPT = [word('So,'), word('um,', true), word('I'), word('think'), word('uh', true), word('yes.')]
 
+const NO_PAUSES = { pause_count: 0, pauses: [] }
+
 function jsonResponse(status: number, body: unknown) {
   return new Response(JSON.stringify(body), {
     status,
@@ -81,7 +83,7 @@ describe('Getting feedback on the Record page', () => {
       jsonResponse(200, {
         transcript: TRANSCRIPT,
         enough_speech: true,
-        metrics: { wpm: 138, typical_wpm: { low: 120, high: 160 }, filler_count: 6 },
+        metrics: { ...NO_PAUSES, wpm: 138, typical_wpm: { low: 120, high: 160 }, filler_count: 6 },
       }),
     )
     const user = await recordAttempt()
@@ -89,7 +91,9 @@ describe('Getting feedback on the Record page', () => {
     await user.click(screen.getByRole('button', { name: 'Get feedback' }))
 
     const metrics = await screen.findByRole('region', { name: 'Metrics' })
-    expect(metrics).toHaveTextContent('138 words a minute (typical ~120–160) · 6 fillers')
+    expect(metrics).toHaveTextContent(
+      '138 words a minute (typical ~120–160) · 6 fillers · 0 pauses',
+    )
   })
 
   it('says "1 filler" for a single Filler', async () => {
@@ -97,14 +101,74 @@ describe('Getting feedback on the Record page', () => {
       jsonResponse(200, {
         transcript: TRANSCRIPT,
         enough_speech: true,
-        metrics: { wpm: 120, typical_wpm: { low: 120, high: 160 }, filler_count: 1 },
+        metrics: { ...NO_PAUSES, wpm: 120, typical_wpm: { low: 120, high: 160 }, filler_count: 1 },
       }),
     )
     const user = await recordAttempt()
 
     await user.click(screen.getByRole('button', { name: 'Get feedback' }))
 
-    expect(await screen.findByRole('region', { name: 'Metrics' })).toHaveTextContent(/· 1 filler$/)
+    expect(await screen.findByRole('region', { name: 'Metrics' })).toHaveTextContent(/· 1 filler ·/)
+  })
+
+  it('marks each Pause in the transcript and counts them in the Metrics', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(200, {
+        transcript: TRANSCRIPT,
+        enough_speech: true,
+        metrics: {
+          wpm: 120,
+          typical_wpm: { low: 120, high: 160 },
+          filler_count: 2,
+          pause_count: 2,
+          longest_pause: 2.14,
+          pauses: [
+            { after: 0, duration: 1.6 },
+            { after: 3, duration: 2.14 },
+          ],
+        },
+      }),
+    )
+    const user = await recordAttempt()
+
+    await user.click(screen.getByRole('button', { name: 'Get feedback' }))
+
+    const transcript = await screen.findByRole('region', { name: 'Transcript' })
+    // Each mark sits after the word the Pause follows, before any Fillers in the silence.
+    expect(transcript).toHaveTextContent('So, //1.6s um, I think //2.1s uh yes.')
+    // Screen readers hear the length in words, not the symbol.
+    const marks = within(transcript).getAllByRole('img')
+    expect(marks.map((m) => m.getAttribute('aria-label'))).toEqual([
+      'pause, 1.6 seconds',
+      'pause, 2.1 seconds',
+    ])
+    expect(screen.getByRole('region', { name: 'Metrics' })).toHaveTextContent(
+      /· 2 pauses, longest 2\.1s$/,
+    )
+  })
+
+  it('says "1 pause" for a single Pause', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(200, {
+        transcript: TRANSCRIPT,
+        enough_speech: true,
+        metrics: {
+          wpm: 120,
+          typical_wpm: { low: 120, high: 160 },
+          filler_count: 2,
+          pause_count: 1,
+          longest_pause: 1.5,
+          pauses: [{ after: 2, duration: 1.5 }],
+        },
+      }),
+    )
+    const user = await recordAttempt()
+
+    await user.click(screen.getByRole('button', { name: 'Get feedback' }))
+
+    expect(await screen.findByRole('region', { name: 'Metrics' })).toHaveTextContent(
+      /· 1 pause, longest 1\.5s$/,
+    )
   })
 
   it('says when there was not enough speech, and shows the words caught', async () => {
