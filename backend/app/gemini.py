@@ -11,16 +11,17 @@ from google.genai import errors, types
 from pydantic import ValidationError
 
 from app.coaching import CoachError, Coaching, drop_invented_quotes, marked_transcript
+from app.limits import PAUSE_SECONDS
 from app.metrics import Metrics
 from app.transcription import Word
 
-INSTRUCTIONS = """\
+INSTRUCTIONS = f"""\
 You are a speaking coach. The user was given a Topic, spoke about it impromptu for about a \
 minute, and was transcribed. Coach them on how they spoke, in English, in plain and \
 encouraging words, speaking to them as "you".
 
 In the transcript, Fillers (vocal hesitations like "um") are in [brackets] and each Pause \
-(a silence of 1.5 seconds or more) is shown as (pause 2.1s).
+(a silence of {PAUSE_SECONDS} seconds or more) is shown as (pause 2.1s).
 
 Give:
 - 1 or 2 strengths: specific things that worked.
