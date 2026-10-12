@@ -159,6 +159,97 @@ def test_no_metrics_when_there_is_not_enough_speech(client):
     assert "metrics" not in body
 
 
+def timeline(*items):
+    """Words 0.3s long, back to back: "w" is a spoken word, "um" a Filler, a number is silence.
+
+    Padded with spoken words to 15, so there's always enough speech.
+    """
+    out, t = [], 0.0
+    for item in [*items, *["w"] * (15 - items.count("w"))]:
+        if isinstance(item, float):
+            t += item
+        else:
+            out.append(Word(text=item, start=t, end=t + 0.3, is_filler=item == "um"))
+            t += 0.3
+    return out
+
+
+def metrics_for(client, *items):
+    use(FakeTranscriber(timeline(*items)))
+    return post_audio(client).json()["metrics"]
+
+
+def test_no_pauses_in_steady_speech(client):
+    metrics = metrics_for(client, "w", "um", "w", 0.5, "w")
+
+    assert metrics["pause_count"] == 0
+    assert metrics["pauses"] == []
+    assert "longest_pause" not in metrics
+
+
+def test_a_gap_of_exactly_the_threshold_is_a_pause(client):
+    # 2.51 - 1.01 is 1.4999999999999998 in floating point, which must still count.
+    first, *rest = timeline()
+    shift = 2.51 - rest[0].start
+    use(
+        FakeTranscriber(
+            [
+                first.model_copy(update={"end": 1.01}),
+                *[
+                    w.model_copy(update={"start": w.start + shift, "end": w.end + shift})
+                    for w in rest
+                ],
+            ]
+        )
+    )
+
+    assert post_audio(client).json()["metrics"]["pauses"] == [{"after": 0, "duration": 1.5}]
+
+
+def test_a_gap_just_under_the_threshold_is_not_a_pause(client):
+    metrics = metrics_for(client, "w", "w", 1.49, "w")
+
+    assert metrics["pause_count"] == 0
+    assert metrics["pauses"] == []
+    assert "longest_pause" not in metrics
+
+
+def test_a_gap_just_over_the_threshold_is_a_pause(client):
+    metrics = metrics_for(client, "w", "w", 1.51, "w")
+
+    assert metrics["pause_count"] == 1
+    # It follows the second word, transcript index 1.
+    assert metrics["pauses"] == [{"after": 1, "duration": 1.51}]
+    assert metrics["longest_pause"] == 1.51
+
+
+def test_a_filler_inside_a_silence_does_not_split_the_pause(client):
+    # "w ... um ... w": 1s, a 0.3s Filler, 1s. Neither silence alone is a Pause, but the gap
+    # between the spoken words is 2.3s.
+    metrics = metrics_for(client, "w", 1.0, "um", 1.0, "w")
+
+    assert metrics["pauses"] == [{"after": 0, "duration": 2.3}]
+
+
+def test_several_pauses_are_listed_in_order_with_the_longest(client):
+    metrics = metrics_for(client, "w", 2.0, "w", "w", "um", 1.6, "w", 3.25, "w")
+
+    assert metrics["pause_count"] == 3
+    assert metrics["pauses"] == [
+        {"after": 0, "duration": 2.0},
+        {"after": 2, "duration": 1.9},
+        {"after": 4, "duration": 3.25},
+    ]
+    assert metrics["longest_pause"] == 3.25
+
+
+def test_silence_before_the_first_spoken_word_is_not_a_pause(client):
+    # A leading Filler then silence: there's no spoken word for a Pause to follow.
+    metrics = metrics_for(client, "um", 3.0, "w")
+
+    assert metrics["pause_count"] == 0
+
+
 def test_empty_audio_is_rejected(client):
     fake = use(FakeTranscriber(words(15)))
     r = post_audio(client, data=b"")

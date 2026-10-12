@@ -3,10 +3,17 @@ export type Word = { text: string; start: number; end: number; is_filler: boolea
 
 export type WpmBand = { low: number; high: number }
 
+// `after` is the transcript index of the non-Filler word the Pause follows.
+export type Pause = { after: number; duration: number }
+
 export type Metrics = {
   wpm: number
   typical_wpm: WpmBand
   filler_count: number
+  pause_count: number
+  // Absent when there are no Pauses.
+  longest_pause?: number
+  pauses: Pause[]
 }
 
 // `metrics` is absent when there wasn't enough speech.

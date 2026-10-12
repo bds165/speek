@@ -8,7 +8,7 @@ This is a personal learning project, built iteratively. Work in small steps: one
 
 Use a feature branch per feature and merge into `main`; don't commit directly to `main`.
 
-After implementing a feature: add tests for its behaviour where they add value (skip trivial static markup), run the full test suites plus build/lint, and report results. Then give clear manual test steps — exact URLs, what to click, and what should happen, including error cases.
+After implementing a feature: add tests for its behaviour where they add value (skip trivial static markup), run the full test suites plus build/lint, and report results. Then give clear manual test steps — exact URLs, what to click, and what should happen, including error cases. Finally, list each file changed with a sentence on what changed in it, a short code snippet where it helps, and how it connects to the rest of the project.
 
 ## Commands
 
