@@ -15,6 +15,24 @@ const TRANSCRIPT = [word('So,'), word('um,', true), word('I'), word('think'), wo
 
 const NO_PAUSES = { pause_count: 0, pauses: [] }
 
+const TOPIC = 'Pick something you know well and talk about it for a minute.'
+
+const METRICS = { ...NO_PAUSES, wpm: 138, typical_wpm: { low: 120, high: 160 }, filler_count: 2 }
+
+const COACHING = {
+  strengths: ['You opened with a clear point.', 'You kept to the Topic.'],
+  improvements: [
+    {
+      category: 'hedging',
+      quote: 'I think',
+      explanation: 'This softens a point you clearly believe.',
+      suggestion: 'State it plainly.',
+    },
+    { category: 'fillers', quote: 'um,', explanation: 'A Filler where a breath would do.' },
+  ],
+  next_step: 'Start with your main point, then give one example.',
+}
+
 function jsonResponse(status: number, body: unknown) {
   return new Response(JSON.stringify(body), {
     status,
@@ -45,7 +63,7 @@ describe('The Topic card', () => {
     const topic = screen.getByRole('region', { name: 'Topic' })
     expect(
       within(topic).getByRole('heading', {
-        name: 'Pick something you know well and talk about it for a minute.',
+        name: TOPIC,
       }),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Start recording' })).toBeInTheDocument()
@@ -68,6 +86,8 @@ describe('Getting feedback on the Record page', () => {
     expect(url).toBe('/api/feedback')
     expect(init.method).toBe('POST')
     expect((init.body as FormData).get('audio')).toBeInstanceOf(Blob)
+    // Whatever the Topic card shows is what gets coached against.
+    expect((init.body as FormData).get('topic')).toBe(TOPIC)
 
     respond(jsonResponse(200, { transcript: TRANSCRIPT, enough_speech: true }))
 
@@ -171,6 +191,46 @@ describe('Getting feedback on the Record page', () => {
     )
   })
 
+  it('shows the Coaching below the Metrics, with no score', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(200, {
+        transcript: TRANSCRIPT,
+        enough_speech: true,
+        metrics: METRICS,
+        coaching: COACHING,
+      }),
+    )
+    const user = await recordAttempt()
+
+    await user.click(screen.getByRole('button', { name: 'Get feedback' }))
+
+    const coaching = await screen.findByRole('region', { name: 'Coaching' })
+    // After the Metrics in reading order.
+    expect(
+      screen.getByRole('region', { name: 'Metrics' }).compareDocumentPosition(coaching) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+
+    const worked = within(coaching).getByRole('list', { name: 'What worked' })
+    expect(within(worked).getAllByRole('listitem').map((li) => li.textContent)).toEqual(
+      COACHING.strengths,
+    )
+
+    const toWorkOn = within(coaching).getByRole('list', { name: 'What to work on' })
+    const [hedging, fillers] = within(toWorkOn).getAllByRole('listitem')
+    expect(hedging).toHaveTextContent(
+      'hedging“I think”This softens a point you clearly believe.Try: State it plainly.',
+    )
+    // No suggestion: no "Try:".
+    expect(fillers).toHaveTextContent('fillers“um,”A Filler where a breath would do.')
+    expect(fillers).not.toHaveTextContent('Try:')
+
+    const nextTime = within(coaching).getByRole('region', { name: 'Next time' })
+    expect(nextTime).toHaveTextContent(COACHING.next_step)
+
+    expect(coaching).not.toHaveTextContent(/score|\/10|%/i)
+  })
+
   it('says when there was not enough speech, and shows the words caught', async () => {
     fetchMock.mockResolvedValue(
       jsonResponse(200, { transcript: [word('Hello'), word('um', true)], enough_speech: false }),
@@ -186,6 +246,7 @@ describe('Getting feedback on the Record page', () => {
     ).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Transcript' })).toHaveTextContent('Hello um')
     expect(screen.queryByRole('region', { name: 'Metrics' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Coaching' })).not.toBeInTheDocument()
   })
 
   it('shows the error message and lets you retry on the same Attempt', async () => {

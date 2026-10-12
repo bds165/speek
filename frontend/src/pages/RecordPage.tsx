@@ -1,5 +1,9 @@
 import { Recorder } from '../recording/Recorder.tsx'
 
+// Hard-coded for now. The Recorder sends whatever the card shows, so a later Shuffle
+// only has to change where this comes from.
+const TOPIC = 'Pick something you know well and talk about it for a minute.'
+
 export function RecordPage() {
   return (
     <div className="flex flex-col gap-7">
@@ -10,13 +14,13 @@ export function RecordPage() {
       >
         <p className="mb-1.5 text-sm text-ink-muted">Your topic</p>
         <h1 className="max-w-[22ch] font-spoken text-3xl tracking-tight text-balance sm:text-topic">
-          Pick something you know well and talk about it for a minute.
+          {TOPIC}
         </h1>
         <p className="mt-4.5 leading-8 text-ink-muted">
           Take a moment to think, then start when you're ready. Aim for about a minute.
         </p>
       </section>
-      <Recorder />
+      <Recorder topic={TOPIC} />
     </div>
   )
 }

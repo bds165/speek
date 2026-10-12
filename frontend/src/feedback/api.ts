@@ -16,17 +16,33 @@ export type Metrics = {
   pauses: Pause[]
 }
 
-// `metrics` is absent when there wasn't enough speech.
-export type Feedback = { transcript: Word[]; enough_speech: boolean; metrics?: Metrics }
+export type Improvement = {
+  category: string
+  quote: string // the user's own words, from the transcript
+  explanation: string
+  suggestion?: string
+}
+
+// No score, on purpose.
+export type Coaching = { strengths: string[]; improvements: Improvement[]; next_step: string }
+
+// `metrics` and `coaching` are absent when there wasn't enough speech.
+export type Feedback = {
+  transcript: Word[]
+  enough_speech: boolean
+  metrics?: Metrics
+  coaching?: Coaching
+}
 
 const UNREACHABLE = "Couldn't reach the server. Check your connection and try again."
 const UNKNOWN = 'Something went wrong while analysing your recording. Please try again.'
 
-// Uploads an Attempt's audio. Throws an Error whose message is safe to show the user.
-export async function requestFeedback(audio: Blob): Promise<Feedback> {
+// Uploads an Attempt's audio and its Topic. Throws an Error whose message is safe to show the user.
+export async function requestFeedback(audio: Blob, topic: string): Promise<Feedback> {
   const form = new FormData()
   // The filename is only informative; the backend goes by the blob's MIME type.
   form.append('audio', audio, audio.type.startsWith('audio/mp4') ? 'attempt.mp4' : 'attempt.webm')
+  form.append('topic', topic)
 
   let response: Response
   try {

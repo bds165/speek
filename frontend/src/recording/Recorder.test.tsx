@@ -15,7 +15,7 @@ beforeEach(() => {
 describe('Recorder', () => {
   it('records, stops, plays back, and releases the mic', async () => {
     const user = userEvent.setup()
-    const { container } = render(<Recorder />)
+    const { container } = render(<Recorder topic="A Topic" />)
 
     await user.click(screen.getByRole('button', { name: 'Start recording' }))
     expect(getUserMedia).toHaveBeenCalledWith({ audio: true })
@@ -29,7 +29,7 @@ describe('Recorder', () => {
 
   it('returns to the start state on "Record again"', async () => {
     const user = userEvent.setup()
-    const { container } = render(<Recorder />)
+    const { container } = render(<Recorder topic="A Topic" />)
 
     await user.click(screen.getByRole('button', { name: 'Start recording' }))
     await user.click(screen.getByRole('button', { name: 'Stop' }))
@@ -42,7 +42,7 @@ describe('Recorder', () => {
 
   it('shows elapsed time while recording', async () => {
     vi.useFakeTimers()
-    render(<Recorder />)
+    render(<Recorder topic="A Topic" />)
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Start recording' }))
@@ -55,7 +55,7 @@ describe('Recorder', () => {
 
   it('shows a timeline of elapsed time against the ~1:00 target and the 2:30 cap', async () => {
     vi.useFakeTimers()
-    render(<Recorder />)
+    render(<Recorder topic="A Topic" />)
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Start recording' }))
@@ -72,7 +72,7 @@ describe('Recorder', () => {
 
   it('marks the target as reached after 1:00 and keeps recording', async () => {
     vi.useFakeTimers()
-    render(<Recorder />)
+    render(<Recorder topic="A Topic" />)
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Start recording' }))
@@ -88,7 +88,7 @@ describe('Recorder', () => {
 
   it('stops automatically at 2:30 and explains why', async () => {
     vi.useFakeTimers()
-    const { container } = render(<Recorder />)
+    const { container } = render(<Recorder topic="A Topic" />)
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Start recording' }))
@@ -106,7 +106,7 @@ describe('Recorder', () => {
 
   it('shows no limit message after a manual stop before 2:30', async () => {
     vi.useFakeTimers()
-    render(<Recorder />)
+    render(<Recorder topic="A Topic" />)
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Start recording' }))
@@ -128,7 +128,7 @@ describe('Recorder', () => {
     }
     vi.stubGlobal('MediaRecorder', SlowStoppingRecorder)
     vi.useFakeTimers()
-    render(<Recorder />)
+    render(<Recorder topic="A Topic" />)
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Start recording' }))
@@ -143,7 +143,7 @@ describe('Recorder', () => {
 
   it('clears the limit message on "Record again"', async () => {
     vi.useFakeTimers()
-    render(<Recorder />)
+    render(<Recorder topic="A Topic" />)
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Start recording' }))
@@ -164,7 +164,7 @@ describe('Recorder', () => {
   it('explains when microphone access is denied', async () => {
     getUserMedia.mockRejectedValue(new DOMException('denied', 'NotAllowedError'))
     const user = userEvent.setup()
-    render(<Recorder />)
+    render(<Recorder topic="A Topic" />)
 
     await user.click(screen.getByRole('button', { name: 'Start recording' }))
     expect(screen.getByText(/Microphone access was denied/)).toBeInTheDocument()

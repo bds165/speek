@@ -1,11 +1,14 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app.coaching import CoachError, Coaching, Improvement
 from app.config import settings
-from app.feedback import get_transcriber
+from app.feedback import get_coach, get_transcriber
 from app.limits import MAX_UPLOAD_BYTES
 from app.main import app
 from app.transcription import TranscriptionError, Word
+
+TOPIC = "Describe a place you love."
 
 
 class FakeTranscriber:
@@ -23,6 +26,33 @@ class FakeTranscriber:
         return self.words
 
 
+COACHING = Coaching(
+    strengths=["You stayed on the Topic."],
+    improvements=[
+        Improvement(category="fillers", quote="w1 w2", explanation="Fillers here."),
+        Improvement(
+            category="pace", quote="w3", explanation="Quick here.", suggestion="Slow down."
+        ),
+    ],
+    next_step="Pause instead of saying um.",
+)
+
+
+class FakeCoach:
+    """Returns canned Coaching and records what it was given."""
+
+    def __init__(self, coaching=COACHING, error=None):
+        self.coaching = coaching
+        self.error = error
+        self.calls = []
+
+    def coach(self, topic, words, metrics):
+        self.calls.append((topic, words, metrics))
+        if self.error:
+            raise self.error
+        return self.coaching
+
+
 def words(n, fillers=0):
     """n spoken words, followed by `fillers` Fillers, half a second apart."""
     out = [Word(text=f"w{i}", start=i * 0.5, end=i * 0.5 + 0.4, is_filler=False) for i in range(n)]
@@ -34,6 +64,8 @@ def words(n, fillers=0):
 
 @pytest.fixture
 def client():
+    # A fake Coach by default, so no test reaches Gemini.
+    use_coach(FakeCoach())
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -43,8 +75,17 @@ def use(transcriber):
     return transcriber
 
 
-def post_audio(client, data=b"fake-audio", content_type="audio/webm;codecs=opus"):
-    return client.post("/api/feedback", files={"audio": ("attempt.webm", data, content_type)})
+def use_coach(coach):
+    app.dependency_overrides[get_coach] = lambda: coach
+    return coach
+
+
+def post_audio(client, data=b"fake-audio", content_type="audio/webm;codecs=opus", topic=TOPIC):
+    return client.post(
+        "/api/feedback",
+        files={"audio": ("attempt.webm", data, content_type)},
+        data={"topic": topic},
+    )
 
 
 def test_returns_transcript_with_fillers(client):
@@ -297,5 +338,72 @@ def test_missing_deepgram_key_is_a_503(client, monkeypatch):
     # No override: use the real dependency, with no key configured.
     monkeypatch.setattr(settings, "deepgram_api_key", "")
     r = post_audio(client)
+    assert r.status_code == 503
+    assert "not configured" in r.json()["detail"].lower()
+
+
+def test_coaching_is_given_the_topic_transcript_and_metrics(client):
+    spoken = speech(*["w"] * 30, seconds=15)
+    use(FakeTranscriber(spoken))
+    coach = use_coach(FakeCoach())
+
+    body = post_audio(client).json()
+
+    [(topic, given_words, metrics)] = coach.calls
+    assert topic == TOPIC
+    assert given_words == spoken
+    assert metrics.model_dump(exclude_none=True) == body["metrics"]
+    assert body["coaching"] == {
+        "strengths": ["You stayed on the Topic."],
+        "improvements": [
+            # No suggestion: absent, not null.
+            {"category": "fillers", "quote": "w1 w2", "explanation": "Fillers here."},
+            {
+                "category": "pace",
+                "quote": "w3",
+                "explanation": "Quick here.",
+                "suggestion": "Slow down.",
+            },
+        ],
+        "next_step": "Pause instead of saying um.",
+    }
+
+
+def test_the_coach_is_not_called_when_there_is_not_enough_speech(client):
+    use(FakeTranscriber(words(14, fillers=5)))
+    coach = use_coach(FakeCoach())
+
+    body = post_audio(client).json()
+
+    assert body["enough_speech"] is False
+    assert "coaching" not in body
+    assert coach.calls == []
+
+
+def test_coach_failure_is_a_502(client):
+    use(FakeTranscriber(words(15)))
+    use_coach(FakeCoach(error=CoachError("Gemini returned 500")))
+
+    r = post_audio(client)
+
+    assert r.status_code == 502
+    assert "try again" in r.json()["detail"].lower()
+    assert "Gemini" not in r.json()["detail"]
+
+
+def test_missing_topic_is_rejected(client):
+    fake = use(FakeTranscriber(words(15)))
+    r = client.post("/api/feedback", files={"audio": ("attempt.webm", b"fake-audio", "audio/webm")})
+    assert r.status_code == 422
+    assert fake.calls == []
+
+
+def test_missing_gemini_key_is_a_503(client, monkeypatch):
+    use(FakeTranscriber(words(15)))
+    del app.dependency_overrides[get_coach]
+    monkeypatch.setattr(settings, "gemini_api_key", "")
+
+    r = post_audio(client)
+
     assert r.status_code == 503
     assert "not configured" in r.json()["detail"].lower()
