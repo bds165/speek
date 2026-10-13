@@ -9,12 +9,12 @@ export function useFeedback() {
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const request = useCallback(async (audio: Blob) => {
+  const request = useCallback(async (audio: Blob, topic: string) => {
     setStatus('analysing')
     setFeedback(null)
     setError(null)
     try {
-      setFeedback(await requestFeedback(audio))
+      setFeedback(await requestFeedback(audio, topic))
       setStatus('done')
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))

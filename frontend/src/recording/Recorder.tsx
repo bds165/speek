@@ -1,3 +1,4 @@
+import { CoachingNotes } from '../feedback/CoachingNotes.tsx'
 import { MetricsLine } from '../feedback/MetricsLine.tsx'
 import { Transcript } from '../feedback/Transcript.tsx'
 import { useFeedback } from '../feedback/useFeedback.ts'
@@ -51,7 +52,8 @@ function Timeline({ elapsed }: { elapsed: number }) {
   )
 }
 
-export function Recorder() {
+// `topic` is sent with the audio, so the Coaching is about what the Topic card showed.
+export function Recorder({ topic }: { topic: string }) {
   const { status, error, recording, elapsed, stoppedAtCap, start, stop, reset } = useRecorder()
   const feedback = useFeedback()
   const pastTarget = elapsed >= TARGET_SECONDS
@@ -107,7 +109,7 @@ export function Recorder() {
             <div className="flex flex-wrap items-center gap-x-4.5 gap-y-3">
               {/* Disabled while analysing, so a late response can't land on a discarded Attempt. */}
               <button
-                onClick={() => feedback.request(recording.blob)}
+                onClick={() => feedback.request(recording.blob, topic)}
                 disabled={analysing}
                 className={PRIMARY_BUTTON}
               >
@@ -152,6 +154,7 @@ export function Recorder() {
           >
             {feedback.feedback.metrics && <MetricsLine metrics={feedback.feedback.metrics} />}
           </Transcript>
+          {feedback.feedback.coaching && <CoachingNotes coaching={feedback.feedback.coaching} />}
         </div>
       )}
     </div>
