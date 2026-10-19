@@ -1,8 +1,9 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { stubMedia } from '../test/fakeMedia.ts'
+import { TOPICS } from '../topic/topics.ts'
 import { RecordPage } from './RecordPage.tsx'
 
 type Word = { text: string; start: number; end: number; is_filler: boolean }
@@ -14,8 +15,6 @@ function word(text: string, is_filler = false): Word {
 const TRANSCRIPT = [word('So,'), word('um,', true), word('I'), word('think'), word('uh', true), word('yes.')]
 
 const NO_PAUSES = { pause_count: 0, pauses: [] }
-
-const TOPIC = 'Pick something you know well and talk about it for a minute.'
 
 const METRICS = { ...NO_PAUSES, wpm: 138, typical_wpm: { low: 120, high: 160 }, filler_count: 2 }
 
@@ -56,17 +55,102 @@ async function recordAttempt() {
   return user
 }
 
+// What the card shows on screen right now (during a riffle, the Topic flicking past).
+function shownTopic() {
+  const heading = within(screen.getByRole('region', { name: 'Topic' })).getByRole('heading')
+  return (heading.querySelector('[aria-hidden="true"]') ?? heading).textContent
+}
+
+// What a screen reader hears as the Topic.
+function accessibleTopic() {
+  let name = ''
+  within(screen.getByRole('region', { name: 'Topic' })).getByRole('heading', {
+    name: (accessibleName) => ((name = accessibleName), true),
+  })
+  return name
+}
+
+// jsdom has no matchMedia; the page treats that as "motion is fine".
+function preferReducedMotion() {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query === '(prefers-reduced-motion: reduce)',
+  }))
+}
+
 describe('The Topic card', () => {
-  it('shows what to talk about, before you start recording', () => {
+  it('shows a Topic from the list, before you start recording', () => {
     render(<RecordPage />)
 
-    const topic = screen.getByRole('region', { name: 'Topic' })
-    expect(
-      within(topic).getByRole('heading', {
-        name: TOPIC,
-      }),
-    ).toBeInTheDocument()
+    expect(TOPICS).toContain(shownTopic())
     expect(screen.getByRole('button', { name: 'Start recording' })).toBeInTheDocument()
+  })
+
+  it('deals a different Topic on Shuffle', async () => {
+    preferReducedMotion()
+    const user = userEvent.setup()
+    render(<RecordPage />)
+    const seen = [shownTopic()]
+
+    // Several in a row, to catch an occasional repeat.
+    for (let i = 0; i < 10; i++) {
+      await user.click(screen.getByRole('button', { name: 'Shuffle' }))
+      const topic = shownTopic()
+      expect(TOPICS).toContain(topic)
+      expect(seen).not.toContain(topic)
+      seen.push(topic)
+    }
+  })
+
+  it('riffles a few Topics past before settling, in under a second', () => {
+    vi.useFakeTimers()
+    render(<RecordPage />)
+    const before = shownTopic()
+
+    act(() => fireEvent.click(screen.getByRole('button', { name: 'Shuffle' })))
+    // Screen readers get the dealt Topic straight away, not each one flicking past.
+    const dealt = accessibleTopic()
+    const seen = new Set<string | null>()
+    for (let t = 0; t < 1000; t += 10) {
+      seen.add(shownTopic())
+      act(() => vi.advanceTimersByTime(10))
+    }
+
+    // The Topic it started from, a few flicked past, and the one it settles on.
+    expect(seen.size).toBeGreaterThanOrEqual(4)
+    expect(shownTopic()).not.toBe(before)
+    expect(shownTopic()).toBe(dealt)
+  })
+
+  it('fixes the Topic once recording starts, and offers Shuffle again after Record again', async () => {
+    const user = userEvent.setup()
+    render(<RecordPage />)
+    const topic = shownTopic()
+
+    await user.click(screen.getByRole('button', { name: 'Start recording' }))
+    expect(screen.queryByRole('button', { name: 'Shuffle' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Stop' }))
+    expect(screen.queryByRole('button', { name: 'Shuffle' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Record again' }))
+    expect(screen.getByRole('button', { name: 'Shuffle' })).toBeInTheDocument()
+    // Keeping the same Topic is fine too.
+    expect(shownTopic()).toBe(topic)
+  })
+
+  it('sends the shuffled Topic with the audio', async () => {
+    preferReducedMotion()
+    fetchMock.mockResolvedValue(jsonResponse(200, { transcript: TRANSCRIPT, enough_speech: true }))
+    const user = userEvent.setup()
+    render(<RecordPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Shuffle' }))
+    const topic = shownTopic()
+    await user.click(screen.getByRole('button', { name: 'Start recording' }))
+    await user.click(screen.getByRole('button', { name: 'Stop' }))
+    await user.click(screen.getByRole('button', { name: 'Get feedback' }))
+
+    expect((fetchMock.mock.calls[0][1].body as FormData).get('topic')).toBe(topic)
   })
 })
 
@@ -87,7 +171,7 @@ describe('Getting feedback on the Record page', () => {
     expect(init.method).toBe('POST')
     expect((init.body as FormData).get('audio')).toBeInstanceOf(Blob)
     // Whatever the Topic card shows is what gets coached against.
-    expect((init.body as FormData).get('topic')).toBe(TOPIC)
+    expect((init.body as FormData).get('topic')).toBe(shownTopic())
 
     respond(jsonResponse(200, { transcript: TRANSCRIPT, enough_speech: true }))
 
