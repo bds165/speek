@@ -5,8 +5,8 @@ Needs DEEPGRAM_API_KEY in .env, clips in tests/fixtures/ (named *.local.*, so gi
 and tests/fixtures/fillers.local.json listing how many Fillers you actually spoke:
 
     [
-      {"clip": "fillers-01.local.webm", "spoken": 3, "note": "held uhhh at start"},
-      {"clip": "fillers-02.local.webm", "spoken": 2}
+      {"file": "fillers-01.local.webm", "spoken": 3, "note": "held uhhh at start"},
+      {"file": "fillers-02.local.webm", "spoken": 2}
     ]
 
 Each clip goes to every setting in VARIANTS (one paid Deepgram call each). It prints
@@ -24,9 +24,10 @@ import httpx
 # Run as a plain script, so make `app` importable from backend/.
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from app.coaching import marked_transcript
 from app.config import settings
 from app.deepgram import PARAMS, DeepgramTranscriber
-from app.transcription import Word
+from app.metrics import calculate_metrics
 
 FIXTURES = Path(__file__).parent.parent / "tests" / "fixtures"
 MANIFEST = FIXTURES / "fillers.local.json"
@@ -40,8 +41,14 @@ VARIANTS = {
     "nova-2 + keywords": {**PARAMS, "keywords": ["um:2", "uh:2"]},
 }
 
-MIME_TYPES = {".webm": "audio/webm", ".m4a": "audio/mp4", ".mp4": "audio/mp4",
-              ".wav": "audio/wav", ".mp3": "audio/mpeg", ".ogg": "audio/ogg"}  # fmt: skip
+MIME_TYPES = {
+    ".webm": "audio/webm",
+    ".m4a": "audio/mp4",
+    ".mp4": "audio/mp4",
+    ".wav": "audio/wav",
+    ".mp3": "audio/mpeg",
+    ".ogg": "audio/ogg",
+}
 
 
 @dataclass
@@ -49,10 +56,6 @@ class Clip:
     file: str
     spoken: int  # Fillers you actually said, counted by listening back
     note: str = ""
-
-
-def count_fillers(words: list[Word]) -> int:
-    return sum(w.is_filler for w in words)
 
 
 def recall(clips: list[Clip], detected: dict[str, int]) -> float | None:
@@ -88,8 +91,15 @@ def main() -> None:
     if not MANIFEST.exists():
         sys.exit(f"No manifest at {MANIFEST}; see the docstring at the top of this script.")
     clips = [
-        Clip(c["clip"], c["spoken"], c.get("note", "")) for c in json.loads(MANIFEST.read_text())
+        Clip(c["file"], c["spoken"], c.get("note", "")) for c in json.loads(MANIFEST.read_text())
     ]
+    # Check every clip before the first paid call, rather than failing halfway through.
+    for clip in clips:
+        path = FIXTURES / clip.file
+        if not path.exists():
+            sys.exit(f"Clip not found: {path}")
+        if path.suffix not in MIME_TYPES:
+            sys.exit(f"Unknown audio type {path.suffix!r}; expected one of {', '.join(MIME_TYPES)}")
 
     detected: dict[str, dict[str, int]] = {v: {} for v in VARIANTS}
     with httpx.Client() as client:
@@ -100,9 +110,10 @@ def main() -> None:
             for name, params in VARIANTS.items():
                 transcriber = DeepgramTranscriber(settings.deepgram_api_key, client, params=params)
                 words = transcriber.transcribe(audio, MIME_TYPES[path.suffix])
-                detected[name][clip.file] = count_fillers(words)
-                text = " ".join(f"[{w.text}]" if w.is_filler else w.text for w in words)
-                print(f"- {name} ({detected[name][clip.file]}): {text}")
+                # The app's own Metrics, so we measure the count the app will rely on.
+                metrics = calculate_metrics(words)
+                detected[name][clip.file] = metrics.filler_count
+                print(f"- {name} ({metrics.filler_count}): {marked_transcript(words, metrics)}")
 
     print("\n" + markdown_table(clips, detected))
 

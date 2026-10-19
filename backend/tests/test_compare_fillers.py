@@ -1,16 +1,6 @@
 """Scoring for the Filler-detection comparison script (#7); no network involved."""
 
-from app.transcription import Word
-from scripts.compare_fillers import Clip, count_fillers, markdown_table, recall
-
-
-def word(text, is_filler=False):
-    return Word(text=text, start=0.0, end=0.1, is_filler=is_filler)
-
-
-def test_counts_only_fillers():
-    words = [word("I,"), word("uh,", True), word("graduate"), word("Um,", True)]
-    assert count_fillers(words) == 2
+from scripts.compare_fillers import Clip, markdown_table, recall
 
 
 def test_recall_does_not_reward_extra_detections():

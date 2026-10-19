@@ -33,7 +33,7 @@ class DeepgramTranscriber:
         self.api_key = api_key
         self.client = client
         self.timeout = timeout
-        # Overridable so scripts/compare_fillers.py can try other models; the app uses PARAMS.
+        # The app always uses PARAMS; overriding is for comparing settings on test clips.
         self.params = params
 
     def transcribe(self, audio: bytes, mime_type: str) -> list[Word]:
