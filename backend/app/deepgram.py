@@ -27,16 +27,20 @@ FILLERS = {"uh", "um", "mhmm", "mm-mm", "uh-uh", "uh-huh", "nuh-uh"}
 
 
 class DeepgramTranscriber:
-    def __init__(self, api_key: str, client: httpx.Client, timeout: float = 60.0):
+    def __init__(
+        self, api_key: str, client: httpx.Client, timeout: float = 60.0, params: dict = PARAMS
+    ):
         self.api_key = api_key
         self.client = client
         self.timeout = timeout
+        # Overridable so scripts/compare_fillers.py can try other models; the app uses PARAMS.
+        self.params = params
 
     def transcribe(self, audio: bytes, mime_type: str) -> list[Word]:
         try:
             response = self.client.post(
                 URL,
-                params=PARAMS,
+                params=self.params,
                 content=audio,
                 headers={"Authorization": f"Token {self.api_key}", "Content-Type": mime_type},
                 timeout=self.timeout,
