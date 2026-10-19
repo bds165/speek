@@ -60,6 +60,17 @@ def test_sends_audio_with_filler_words_on():
     assert request.content == b"audio-bytes"
 
 
+def test_params_can_be_overridden_to_compare_settings():
+    requests = []
+    client = httpx.Client(transport=httpx.MockTransport(replay_fixture(requests)))
+    params = {"model": "nova-3", "filler_words": "true", "keyterm": ["um", "uh"]}
+    DeepgramTranscriber("test-key", client, params=params).transcribe(b"audio", "audio/webm")
+
+    [request] = requests
+    assert request.url.params["model"] == "nova-3"
+    assert request.url.params.get_list("keyterm") == ["um", "uh"]
+
+
 def test_error_status_raises_transcription_error():
     t = transcriber_returning(lambda r: httpx.Response(401, json={"err_msg": "bad key"}))
     with pytest.raises(TranscriptionError):
