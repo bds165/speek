@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { TOPICS, pickTopic } from './topics.ts'
+import { pickTopic } from './topics.ts'
 
 // How many past Topics Shuffle avoids dealing again (out of the whole list).
 const RECENT_LIMIT = 10
@@ -14,16 +14,11 @@ function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 }
 
-function randomTopic(exclude: readonly string[]) {
-  const options = TOPICS.filter((topic) => !exclude.includes(topic))
-  return options[Math.floor(Math.random() * options.length)]
-}
-
 // `topic` is the dealt Topic: the one recorded against and read to screen readers.
-// `flicker` is a Topic riffling past on screen (null when the card has settled).
+// `flickingTopic` is a Topic riffling past on screen (null when the card has settled).
 export function useTopic() {
   const [recent, setRecent] = useState<string[]>(() => [pickTopic([])])
-  const [flicker, setFlicker] = useState<string | null>(null)
+  const [flickingTopic, setFlickingTopic] = useState<string | null>(null)
   const timersRef = useRef<number[]>([])
   const topic = recent[recent.length - 1]
 
@@ -38,7 +33,7 @@ export function useTopic() {
     // Deal straight away, so whatever happens mid-riffle uses the new Topic.
     setRecent([...recent, next].slice(-RECENT_LIMIT))
     if (prefersReducedMotion()) {
-      setFlicker(null)
+      setFlickingTopic(null)
       return
     }
 
@@ -46,19 +41,20 @@ export function useTopic() {
     // The first flick is set right away, so the dealt Topic never shows before the riffle.
     const flicks: string[] = []
     for (let i = 0; i < FLICK_MS.length - 1; i++) {
-      flicks.push(randomTopic([flicks.at(-1) ?? topic, next]))
+      // Every flick is new: not the old Topic, an earlier flick, or the dealt one.
+      flicks.push(pickTopic([topic, next, ...flicks]))
     }
     flicks.push(next)
-    setFlicker(flicks[0])
+    setFlickingTopic(flicks[0])
     let at = 0
     FLICK_MS.forEach((ms, i) => {
       at += ms
       const shown = flicks[i + 1] ?? null
-      timersRef.current.push(window.setTimeout(() => setFlicker(shown), at))
+      timersRef.current.push(window.setTimeout(() => setFlickingTopic(shown), at))
     })
   }, [recent, topic, clearTimers])
 
   useEffect(() => clearTimers, [clearTimers])
 
-  return { topic, flicker, shuffle }
+  return { topic, flickingTopic, shuffle }
 }

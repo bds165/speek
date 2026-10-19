@@ -5,10 +5,11 @@ import { useTopic } from '../topic/useTopic.ts'
 export function RecordPage() {
   // The recorder lives here, not in <Recorder>, because the Topic card needs its status too.
   const recorder = useRecorder()
-  const { topic, flicker, shuffle } = useTopic()
+  const { topic, flickingTopic, shuffle } = useTopic()
   // The Topic belongs to the Attempt: it can change only before recording starts.
   const canShuffle = recorder.status === 'idle' || recorder.status === 'error'
-  const riffling = canShuffle && flicker !== null
+  // Once recording starts, any riffle still running is ignored: the card shows the dealt Topic.
+  const shown = (canShuffle && flickingTopic) || topic
 
   return (
     <div className="flex flex-col gap-7">
@@ -28,23 +29,22 @@ export function RecordPage() {
             </button>
           )}
         </div>
-        {/* aria-live announces a newly dealt Topic. While riffling, the Topics flicking past
-            are hidden from screen readers, which only get the dealt one. */}
+        {/* aria-live announces a newly dealt Topic. Screen readers get only the dealt Topic
+            (sr-only); what's on screen, including Topics flicking past, is hidden from them.
+            Both spans are always there, so the live region changes once per Shuffle. */}
         <h1
           aria-live="polite"
           className="max-w-[22ch] font-spoken text-3xl tracking-tight text-balance sm:text-topic"
         >
-          {riffling ? (
-            <>
-              {/* A new key per flick restarts the animation. */}
-              <span key={flicker} aria-hidden="true" className="riffle-flick">
-                {flicker}
-              </span>
-              <span className="sr-only">{topic}</span>
-            </>
-          ) : (
-            topic
-          )}
+          <span className="sr-only">{topic}</span>
+          {/* A new key per flick restarts the animation. */}
+          <span
+            key={shown}
+            aria-hidden="true"
+            className={canShuffle && flickingTopic ? 'riffle-flick' : undefined}
+          >
+            {shown}
+          </span>
         </h1>
         <p className="mt-4.5 leading-8 text-ink-muted">
           Take a moment to think, then start when you're ready. Aim for about a minute.

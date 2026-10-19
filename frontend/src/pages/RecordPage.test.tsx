@@ -58,7 +58,7 @@ async function recordAttempt() {
 // What the card shows on screen right now (during a riffle, the Topic flicking past).
 function shownTopic() {
   const heading = within(screen.getByRole('region', { name: 'Topic' })).getByRole('heading')
-  return (heading.querySelector('[aria-hidden="true"]') ?? heading).textContent
+  return heading.querySelector('[aria-hidden="true"]')?.textContent
 }
 
 // What a screen reader hears as the Topic.
@@ -91,8 +91,8 @@ describe('The Topic card', () => {
     render(<RecordPage />)
     const seen = [shownTopic()]
 
-    // Several in a row, to catch an occasional repeat.
-    for (let i = 0; i < 10; i++) {
+    // Several in a row, to catch an occasional repeat. (Fewer than the recent Topics it avoids.)
+    for (let i = 0; i < 5; i++) {
       await user.click(screen.getByRole('button', { name: 'Shuffle' }))
       const topic = shownTopic()
       expect(TOPICS).toContain(topic)
@@ -109,7 +109,7 @@ describe('The Topic card', () => {
     act(() => fireEvent.click(screen.getByRole('button', { name: 'Shuffle' })))
     // Screen readers get the dealt Topic straight away, not each one flicking past.
     const dealt = accessibleTopic()
-    const seen = new Set<string | null>()
+    const seen = new Set<string | null | undefined>()
     for (let t = 0; t < 1000; t += 10) {
       seen.add(shownTopic())
       act(() => vi.advanceTimersByTime(10))
