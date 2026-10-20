@@ -123,3 +123,5 @@ export function useRecorder() {
 
   return { status, error, recording, elapsed, stoppedAtCap, start, stop, reset }
 }
+
+export type RecorderState = ReturnType<typeof useRecorder>

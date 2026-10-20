@@ -88,6 +88,27 @@
   }
 }
 
+/*
+ * Shuffle's riffle: each Topic flicking past lands like the next card off a deck, sliding in
+ * from the side with a slight tilt. Sideways on purpose: a vertical roll reads as a slot machine.
+ * The animation is shorter than the quickest flick, so each card lands before the next one.
+ * Without motion the hook skips the riffle entirely; this guard is a second line of defence.
+ */
+@utility riffle-flick {
+  display: inline-block;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: riffle-flick 55ms ease-out both;
+  }
+}
+
+@keyframes riffle-flick {
+  from {
+    opacity: 0.35;
+    transform: translateX(0.4em) rotate(1.5deg);
+  }
+}
+
 @layer base {
   body {
     background-color: var(--color-desk);

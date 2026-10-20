@@ -3,7 +3,7 @@ import { MetricsLine } from '../feedback/MetricsLine.tsx'
 import { Transcript } from '../feedback/Transcript.tsx'
 import { useFeedback } from '../feedback/useFeedback.ts'
 import { CAP_SECONDS, TARGET_SECONDS } from './limits.ts'
-import { useRecorder } from './useRecorder.ts'
+import type { RecorderState } from './useRecorder.ts'
 
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60)
@@ -53,8 +53,9 @@ function Timeline({ elapsed }: { elapsed: number }) {
 }
 
 // `topic` is sent with the audio, so the Coaching is about what the Topic card showed.
-export function Recorder({ topic }: { topic: string }) {
-  const { status, error, recording, elapsed, stoppedAtCap, start, stop, reset } = useRecorder()
+// `recorder` comes from the page, which also needs its status to lock the Topic.
+export function Recorder({ recorder, topic }: { recorder: RecorderState; topic: string }) {
+  const { status, error, recording, elapsed, stoppedAtCap, start, stop, reset } = recorder
   const feedback = useFeedback()
   const pastTarget = elapsed >= TARGET_SECONDS
   const analysing = feedback.status === 'analysing'
